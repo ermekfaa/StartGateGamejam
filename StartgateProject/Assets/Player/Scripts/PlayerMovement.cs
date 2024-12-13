@@ -7,6 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public float moveDuration = 0.1f; // Hareketin süresi (saniye cinsinden)
 
     private Vector3 targetPosition;
+    private Vector3 startPosition; // Hareketin baþlangýç pozisyonu
     private bool isMoving = false;
     private float moveStartTime;
 
@@ -24,7 +25,10 @@ public class PlayerMovement : MonoBehaviour
         {
             // Hareket süresine göre pozisyonu güncelle
             float elapsedTime = (Time.time - moveStartTime) / moveDuration;
-            transform.position = Vector3.Lerp(transform.position, targetPosition, elapsedTime);
+
+            // Sinusoidal hareket (baþlangýç ve bitiþte yavaþlama, ortada hýzlanma)
+            float t = Mathf.Sin(elapsedTime * Mathf.PI * 0.5f);
+            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
 
             // Hedef pozisyona ulaþýldý mý?
             if (elapsedTime >= 1f)
@@ -82,6 +86,7 @@ public class PlayerMovement : MonoBehaviour
         if (!isMoving)
         {
             // Yeni pozisyonu hesapla
+            startPosition = transform.position; // Hareketin baþladýðý pozisyonu kaydet
             targetPosition = transform.position + direction * moveDistance;
             isMoving = true;
             moveStartTime = Time.time;
