@@ -5,6 +5,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float moveDistance = 1f; // Karakterin her hareket ettiðinde ilerleyeceði mesafe
     public float moveDuration = 0.1f; // Hareketin süresi (saniye cinsinden)
+    public int maxQueueSize = 2; // Kuyrukta izin verilen maksimum hareket sayýsý
 
     private Vector3 targetPosition;
     private Vector3 startPosition; // Hareketin baþlangýç pozisyonu
@@ -12,7 +13,6 @@ public class PlayerMovement : MonoBehaviour
     private float moveStartTime;
 
     private Queue<Vector3> inputQueue = new Queue<Vector3>(); // Tuþ giriþlerini sýraya almak için
-    private Vector3 currentDirection = Vector3.zero; // Basýlý tutulduðunda yönü takip etmek için
 
     void Start()
     {
@@ -40,10 +40,6 @@ public class PlayerMovement : MonoBehaviour
                 if (inputQueue.Count > 0)
                 {
                     TryMove(inputQueue.Dequeue());
-                }
-                else
-                {
-                    currentDirection = Vector3.zero; // Kuyruk boþsa yön sýfýrlanýr
                 }
             }
 
@@ -75,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
         {
             TryMove(direction);
         }
-        else if (inputQueue.Count < 1) // Sadece bir hareketi sýraya al
+        else if (inputQueue.Count < maxQueueSize) // Kuyruk boyutunu sýnýrla
         {
             inputQueue.Enqueue(direction);
         }
