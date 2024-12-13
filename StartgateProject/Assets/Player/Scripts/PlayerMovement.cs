@@ -1,91 +1,102 @@
 using UnityEngine;
+using UnityEngine.Tilemaps; // Tilemap için gerekli
 using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour
 {
     public float moveDistance = 1f; // Karakterin her hareket ettiðinde ilerleyeceði mesafe
     public float moveDuration = 0.1f; // Hareketin süresi (saniye cinsinden)
-    public int maxQueueSize = 2; // Kuyrukta izin verilen maksimum hareket sayýsý
+    public Tilemap wallTilemap; // Engelleri içeren Tilemap
+    private HashSet<Vector3> wallPositions = new HashSet<Vector3>(); // Duvar pozisyonlarýný saklar
 
     private Vector3 targetPosition;
     private Vector3 startPosition; // Hareketin baþlangýç pozisyonu
     private bool isMoving = false;
     private float moveStartTime;
 
-    private Queue<Vector3> inputQueue = new Queue<Vector3>(); // Tuþ giriþlerini sýraya almak için
-
     void Start()
     {
         targetPosition = transform.position;
+        CollectWallPositions(); // Duvar pozisyonlarýný kaydet
     }
 
     void Update()
     {
         if (isMoving)
         {
-            // Hareket süresine göre pozisyonu güncelle
             float elapsedTime = (Time.time - moveStartTime) / moveDuration;
-
-            // Sinusoidal hareket (baþlangýç ve bitiþte yavaþlama, ortada hýzlanma)
             float t = Mathf.Sin(elapsedTime * Mathf.PI * 0.5f);
             transform.position = Vector3.Lerp(startPosition, targetPosition, t);
 
-            // Hedef pozisyona ulaþýldý mý?
             if (elapsedTime >= 1f)
             {
                 transform.position = targetPosition;
                 isMoving = false;
-
-                // Kuyruktan bir sonraki hareketi al ve baþlat
-                if (inputQueue.Count > 0)
-                {
-                    TryMove(inputQueue.Dequeue());
-                }
             }
 
             return;
         }
 
-        // Kullanýcý giriþi kontrolü
+        // Kullanýcý giriþlerini kontrol et
         if (Input.GetKey(KeyCode.W))
         {
-            HandleInput(Vector3.up);
+            TryMove(Vector3.up);
         }
         else if (Input.GetKey(KeyCode.S))
         {
-            HandleInput(Vector3.down);
+            TryMove(Vector3.down);
         }
         else if (Input.GetKey(KeyCode.A))
         {
-            HandleInput(Vector3.left);
+            TryMove(Vector3.left);
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            HandleInput(Vector3.right);
-        }
-    }
-
-    void HandleInput(Vector3 direction)
-    {
-        if (!isMoving)
-        {
-            TryMove(direction);
-        }
-        else if (inputQueue.Count < maxQueueSize) // Kuyruk boyutunu sýnýrla
-        {
-            inputQueue.Enqueue(direction);
+            TryMove(Vector3.right);
         }
     }
 
     void TryMove(Vector3 direction)
     {
-        if (!isMoving)
+        if (isMoving) return;
+
+        Vector3 nextPosition = transform.position + direction * moveDistance;
+
+        // Eðer hedef pozisyon duvarsa hareketi engelle
+        if (wallPositions.Contains(nextPosition))
         {
-            // Yeni pozisyonu hesapla
-            startPosition = transform.position; // Hareketin baþladýðý pozisyonu kaydet
-            targetPosition = transform.position + direction * moveDistance;
-            isMoving = true;
-            moveStartTime = Time.time;
+            Debug.Log("Duvara çarpamazsýn! Hareket engellendi.");
+            return;
         }
+
+        startPosition = transform.position;
+        targetPosition = nextPosition;
+        isMoving = true;
+        moveStartTime = Time.time;
+    }
+
+    void CollectWallPositions()
+    {
+        // Tilemap'teki tüm aktif hücreleri kontrol et ve koordinatlarý kaydet
+        BoundsInt bounds = wallTilemap.cellBounds;
+        TileBase[] allTiles = wallTilemap.GetTilesBlock(bounds);
+
+        for (int x = bounds.xMin; x < bounds.xMax; x++)
+        {
+            for (int y = bounds.yMin; y < bounds.yMax; y++)
+            {
+                Vector3Int tilePosition = new Vector3Int(x, y, 0);
+                if (wallTilemap.HasTile(tilePosition))
+                {
+                    Vector3 worldPosition = wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0); // Tile'larýn merkezine hizala
+                    wallPositions.Add(worldPosition);
+
+                    // Pozisyonu konsola yazdýr
+                    Debug.Log($"Duvar Pozisyonu: {worldPosition}");
+                }
+            }
+        }
+
+        Debug.Log($"Toplam {wallPositions.Count} duvar pozisyonu kaydedildi.");
     }
 }

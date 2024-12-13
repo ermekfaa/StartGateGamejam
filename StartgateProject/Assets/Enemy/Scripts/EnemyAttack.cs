@@ -1,12 +1,14 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class EnemyAttack : MonoBehaviour
 {
     public enum EnemyState
     {
-        MoveRandomly,
         CheckForPlayer,
+        MoveRandomly,
         AttackPlayer
     }
 
@@ -19,16 +21,26 @@ public class EnemyAttack : MonoBehaviour
     public Transform firePoint;       // Merminin çýkýþ noktasý
 
     [Header("Movement Settings")]
-    public float moveDistance = 1f; // Karakterin her hareket ettiðinde ilerleyeceði mesafe
+    public float moveDistance = 1f;   // Karakterin her hareket ettiðinde ilerleyeceði mesafe
     public float moveDuration = 0.1f; // Hareketin süresi (saniye cinsinden)
 
-    private EnemyState currentState = EnemyState.MoveRandomly;
+    [Header("Environment Settings")]
+    public Tilemap wallTilemap; // Duvarlarýn bulunduðu Tilemap
+    private HashSet<Vector3> wallPositions = new HashSet<Vector3>(); // Duvar pozisyonlarýný saklar
+
+    private EnemyState currentState = EnemyState.CheckForPlayer;
     private float stateTimer;
     private GameObject player;
     private Vector3 startPosition;
     private Vector3 targetPosition;
     private bool hasMoved;
     private float moveTimer;
+
+    private void Awake()
+    {
+        // Duvar pozisyonlarýný oyun baþýnda topla
+        CollectWallPositions();
+    }
 
     private void Start()
     {
@@ -102,23 +114,35 @@ public class EnemyAttack : MonoBehaviour
 
         // Rastgele bir yön seç (yukarý, aþaðý, sað, sol)
         Vector2 direction = Vector2.zero;
-        switch (Random.Range(0, 4))
+        for (int i = 0; i < 10; i++) // Maksimum 10 deneme yap
         {
-            case 0:
-                direction = Vector2.up;
-                break;
-            case 1:
-                direction = Vector2.down;
-                break;
-            case 2:
-                direction = Vector2.left;
-                break;
-            case 3:
-                direction = Vector2.right;
-                break;
+            switch (Random.Range(0, 4))
+            {
+                case 0:
+                    direction = Vector2.up;
+                    break;
+                case 1:
+                    direction = Vector2.down;
+                    break;
+                case 2:
+                    direction = Vector2.left;
+                    break;
+                case 3:
+                    direction = Vector2.right;
+                    break;
+            }
+
+            targetPosition = startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance;
+
+            // Eðer hedef pozisyon bir duvar deðilse, hareket et
+            if (!wallPositions.Contains(targetPosition))
+            {
+                return; // Geçerli pozisyon bulundu
+            }
         }
 
-        targetPosition = startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance;
+        // Eðer geçerli bir pozisyon bulunamazsa hedef pozisyonu deðiþtirme
+        targetPosition = startPosition;
     }
 
     private void CheckForPlayer()
@@ -142,14 +166,14 @@ public class EnemyAttack : MonoBehaviour
     {
         if (player == null)
         {
-            currentState = EnemyState.MoveRandomly;
+            currentState = EnemyState.CheckForPlayer;
             return;
         }
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
         if (distanceToPlayer > enemyData.aggroRange)
         {
-            currentState = EnemyState.MoveRandomly;
+            currentState = EnemyState.CheckForPlayer;
             stateTimer = enemyData.waitingTime;
             return;
         }
@@ -179,5 +203,30 @@ public class EnemyAttack : MonoBehaviour
             fireballScript.bulletData = fireballData;
             fireballScript.owner = gameObject;
         }
+    }
+
+    private void CollectWallPositions()
+    {
+        // Tilemap'teki tüm aktif hücreleri kontrol et ve koordinatlarý kaydet
+        BoundsInt bounds = wallTilemap.cellBounds;
+        TileBase[] allTiles = wallTilemap.GetTilesBlock(bounds);
+
+        for (int x = bounds.xMin; x < bounds.xMax; x++)
+        {
+            for (int y = bounds.yMin; y < bounds.yMax; y++)
+            {
+                Vector3Int tilePosition = new Vector3Int(x, y, 0);
+                if (wallTilemap.HasTile(tilePosition))
+                {
+                    Vector3 worldPosition = wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0); // Tile'larýn merkezine hizala
+                    wallPositions.Add(worldPosition);
+
+                    // Duvar pozisyonlarýný yazdýr
+                    Debug.Log($"Enemy için Duvar Pozisyonu: {worldPosition}");
+                }
+            }
+        }
+
+        Debug.Log($"Enemy için toplam {wallPositions.Count} duvar pozisyonu kaydedildi.");
     }
 }
