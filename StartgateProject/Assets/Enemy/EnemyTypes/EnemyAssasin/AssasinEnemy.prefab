@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2274215583270335384}
   m_Layer: 0
   m_Name: AssasinEnemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -110,3 +110,6 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 0
+  swordTransform: {fileID: 0}
+  swordSwingBackAngle: -45
+  swordStabDuration: 0.2

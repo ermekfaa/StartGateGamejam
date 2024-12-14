@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: -1479357982025913309}
   m_Layer: 0
   m_Name: MiddleEnemy 1
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -136,8 +136,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveDistance: 1
   moveDuration: 0.5
-  player: {fileID: 0}
-  enemyData: {fileID: 11400000, guid: 0df5e5acb355ca34d84bb4c26d16c282, type: 2}
   wallTilemap: {fileID: 0}
 --- !u!58 &-1346139770614447216
 CircleCollider2D:
