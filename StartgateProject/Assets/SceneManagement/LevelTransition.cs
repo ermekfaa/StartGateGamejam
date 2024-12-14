@@ -16,8 +16,10 @@ namespace IgnoreSolutions
 
         private void Start()
         {
-            // MaskImage ve yan rect'leri başlangıçta görünmez yap
+            // MaskImage başlangıçta görünmez yap
             maskImage.gameObject.SetActive(false);
+
+            // Tüm RectSide nesnelerini başlangıçta devre dışı bırak
             foreach (Transform child in maskImage.transform.parent)
             {
                 if (child.name.StartsWith("RectSide"))
@@ -26,12 +28,12 @@ namespace IgnoreSolutions
                 }
             }
 
-            // MaskImage'yi ortalamak için anchor değerlerini ayarla
+            // MaskImage'yi tüm ekranı kapsayacak şekilde ayarla
             RectTransform maskRect = maskImage.rectTransform;
-            maskRect.anchorMin = new Vector2(0.5f, 0.5f);
-            maskRect.anchorMax = new Vector2(0.5f, 0.5f);
-            maskRect.pivot = new Vector2(0.5f, 0.5f);
-            maskRect.sizeDelta = new Vector2(10000, 10000); // Başlangıç boyutu büyük
+            maskRect.anchorMin = new Vector2(0.5f, 0.5f);  // Ortala
+            maskRect.anchorMax = new Vector2(0.5f, 0.5f);  // Ortala
+            maskRect.pivot = new Vector2(0.5f, 0.5f);      // Ortala
+            maskRect.sizeDelta = new Vector2(10000, 10000); // Başlangıç boyutu
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -50,16 +52,16 @@ namespace IgnoreSolutions
                 }
 
                 // Transition'u başlat
-                StartCoroutine(TransitionAndLoadNextLevel());
+                StartCoroutine(TransitionEffect());
             }
         }
 
-        private IEnumerator TransitionAndLoadNextLevel()
+        private IEnumerator TransitionEffect()
         {
             isTransitioning = true;
-            maskImage.gameObject.SetActive(true);
 
-            // Yan rect'leri aktif yap
+            // MaskImage ve RectSide nesnelerini aktif yap
+            maskImage.gameObject.SetActive(true);
             foreach (Transform child in maskImage.transform.parent)
             {
                 if (child.name.StartsWith("RectSide"))
@@ -68,40 +70,41 @@ namespace IgnoreSolutions
                 }
             }
 
-            // MaskImage boyutunu küçült
-            float elapsedTime = 0f;
+            // Geçiş animasyonu için boyut ayarları
             Vector2 maxSize = new Vector2(10000, 10000);
             Vector2 minSize = new Vector2(1, 1);
 
+            // Boyutu küçültme
+            yield return StartCoroutine(AnimateSize(maskImage.rectTransform, maxSize, minSize));
+
+            // Küçük boyutta bir saniye bekle
+            yield return new WaitForSeconds(1f);
+
+            // Sahne geçişi
+            LoadNextLevel();
+        }
+
+        private IEnumerator AnimateSize(RectTransform rectTransform, Vector2 startSize, Vector2 targetSize)
+        {
+            float elapsedTime = 0f;
+
             while (elapsedTime < transitionDuration)
             {
                 elapsedTime += Time.deltaTime;
-                maskImage.rectTransform.sizeDelta = Vector2.Lerp(maxSize, minSize, elapsedTime / transitionDuration);
+                rectTransform.sizeDelta = Vector2.Lerp(startSize, targetSize, elapsedTime / transitionDuration);
                 yield return null;
             }
 
-            // MaskImage boyutunu büyüt
-            elapsedTime = 0f;
-            while (elapsedTime < transitionDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                maskImage.rectTransform.sizeDelta = Vector2.Lerp(minSize, maxSize, elapsedTime / transitionDuration);
-                yield return null;
-            }
+            rectTransform.sizeDelta = targetSize; // Nihai boyut
+        }
 
-            // MaskImage ve yan rect'leri tekrar gizle
-            maskImage.gameObject.SetActive(false);
-            foreach (Transform child in maskImage.transform.parent)
-            {
-                if (child.name.StartsWith("RectSide"))
-                {
-                    child.gameObject.SetActive(false);
-                }
-            }
-
-            // Bir sonraki sahneye geçiş yap
+        private void LoadNextLevel()
+        {
             switch (gateName)
             {
+                case "LavaGate":
+                    SceneManager.LoadScene("Level1");
+                    break;
                 case "Gate1":
                     SceneManager.LoadScene("Level2");
                     break;
