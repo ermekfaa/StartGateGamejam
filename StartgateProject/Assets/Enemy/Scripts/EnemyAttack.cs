@@ -14,6 +14,13 @@ public class EnemyAttack : MonoBehaviour
     public Transform firePoint;
 
     private EnemyState currentState = EnemyState.CheckForPlayer;
+    public EnemyState CurrentState // Getter ve Setter
+    {
+        get { return currentState; }
+        set { currentState = value; } // Setter eklenmiþtir
+    }
+
+
     private float stateTimer;
     private GameObject player;
     private EnemyMovementBasic movementComponent;
