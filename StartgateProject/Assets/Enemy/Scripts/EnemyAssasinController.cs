@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class EnemyAssasinController : MonoBehaviour
+public class EnemyAssassinController : MonoBehaviour
 {
     public enum EnemyState { CheckForPlayer, MoveTowardsPlayer, AttackPlayer }
 
@@ -23,6 +23,9 @@ public class EnemyAssasinController : MonoBehaviour
     public Transform attackPoint;
     public float attackRange = 1.5f;
     public LayerMask playerLayer;
+    public Transform swordTransform; // Sword object transform
+    public float swordSwingBackAngle = -45f; // Angle to swing back the sword
+    public float swordStabDuration = 0.2f; // Time it takes to stab
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
@@ -47,6 +50,8 @@ public class EnemyAssasinController : MonoBehaviour
     private void Update()
     {
         stateTimer -= Time.deltaTime;
+
+        RotateTowardsPlayer();
 
         switch (currentState)
         {
@@ -102,6 +107,15 @@ public class EnemyAssasinController : MonoBehaviour
         transform.position = targetPosition;
     }
 
+    private void RotateTowardsPlayer()
+    {
+        if (player == null) return;
+
+        Vector3 direction = (player.transform.position - transform.position).normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
     private void CheckForPlayer()
     {
         if (player == null) return;
@@ -148,14 +162,39 @@ public class EnemyAssasinController : MonoBehaviour
 
         if (stateTimer <= 0f)
         {
-            SwingSword();
+            StartCoroutine(SwordStabAnimation());
             stateTimer = enemyData.waitingTime;
         }
     }
 
-    private void SwingSword()
+    private IEnumerator SwordStabAnimation()
     {
-        Debug.Log("Swinging sword at the player!");
+        Debug.Log("Sword stab initiated.");
+
+        // Swing the sword back
+        float elapsedTime = 0f;
+        Quaternion initialRotation = swordTransform.localRotation;
+        Quaternion swingBackRotation = Quaternion.Euler(0, 0, swordSwingBackAngle);
+
+        while (elapsedTime < swordStabDuration / 2)
+        {
+            elapsedTime += Time.deltaTime;
+            swordTransform.localRotation = Quaternion.Lerp(initialRotation, swingBackRotation, elapsedTime / (swordStabDuration / 2));
+            yield return null;
+        }
+
+        // Stab the sword forward
+        elapsedTime = 0f;
+        while (elapsedTime < swordStabDuration / 2)
+        {
+            elapsedTime += Time.deltaTime;
+            swordTransform.localRotation = Quaternion.Lerp(swingBackRotation, initialRotation, elapsedTime / (swordStabDuration / 2));
+            yield return null;
+        }
+
+        Debug.Log("Sword stab completed.");
+
+        // Check for player damage
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, playerLayer);
 
         foreach (Collider2D hit in hitPlayers)
