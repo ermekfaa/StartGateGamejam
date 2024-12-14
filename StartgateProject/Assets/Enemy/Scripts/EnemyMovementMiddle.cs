@@ -7,11 +7,12 @@ public class EnemyMovementMiddle : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveDistance = 1f;
-    public float moveDuration = 0.5f; // Hareket süresi
 
     [Header("Detection Settings")]
-    public float detectionRange = 5f; // Oyuncuyu algýlayabileceði mesafe
     public Transform player; // Oyuncunun referansý
+
+    [Header("Enemy Data")]
+    public EnemyData enemyData; // EnemyData ScriptableObject referansý
 
     [Header("Environment Settings")]
     public Tilemap wallTilemap;
@@ -39,18 +40,18 @@ public class EnemyMovementMiddle : MonoBehaviour
 
         if (playerDetected)
         {
-            // Oyuncuyu görüyorsa saldýr
+            Debug.Log("Player detected: Chasing player");
             enemyAttack.CurrentState = EnemyAttack.EnemyState.AttackPlayer;
             hasMoved = false; // Hareketi durdur
         }
         else if (movingToLastSeen)
         {
-            // Son görülen pozisyona ilerle
+            Debug.Log("Moving to last seen player position");
             MoveToLastSeenPosition();
         }
         else
         {
-            // Rastgele hareket
+            Debug.Log("Moving randomly");
             enemyAttack.CurrentState = EnemyAttack.EnemyState.MoveRandomly;
             MoveRandomly();
         }
@@ -60,10 +61,10 @@ public class EnemyMovementMiddle : MonoBehaviour
     {
         if (player == null) return;
 
-        playerDetected = Vector3.Distance(transform.position, player.position) <= detectionRange;
+        playerDetected = Vector3.Distance(SnapToGrid(transform.position), SnapToGrid(player.position)) <= enemyData.aggroRange;
         if (playerDetected)
         {
-            lastSeenPlayerPosition = player.position; // Son görülen pozisyonu güncelle
+            lastSeenPlayerPosition = SnapToGrid(player.position); // Son görülen pozisyonu güncelle
             movingToLastSeen = false; // Son görülen pozisyona gitmeye gerek yok
         }
         else if (!movingToLastSeen)
@@ -77,7 +78,7 @@ public class EnemyMovementMiddle : MonoBehaviour
         if (hasMoved) return;
 
         // Eðer son görülen pozisyona ulaþýldýysa
-        if (transform.position == lastSeenPlayerPosition)
+        if (SnapToGrid(transform.position) == lastSeenPlayerPosition)
         {
             movingToLastSeen = false;
             ResetMovement();
@@ -101,18 +102,18 @@ public class EnemyMovementMiddle : MonoBehaviour
 
     private IEnumerator MoveCoroutine()
     {
-        startPosition = transform.position;
+        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
         moveTimer = 0f; // Timer sýfýrlandý
 
-        while (moveTimer < moveDuration)
+        while (moveTimer < enemyData.waitingTime * 0.5f) // Hýzý artýrmak için bekleme süresi azaltýldý
         {
             moveTimer += Time.deltaTime;
-            float t = Mathf.Sin((moveTimer / moveDuration) * Mathf.PI * 0.5f);
+            float t = Mathf.Sin((moveTimer / (enemyData.waitingTime * 0.5f)) * Mathf.PI * 0.5f);
             transform.position = Vector3.Lerp(startPosition, targetPosition, t);
             yield return null;
         }
 
-        transform.position = targetPosition;
+        transform.position = SnapToGrid(targetPosition); // Hedef pozisyon grid'e oturtulur
 
         // Duvar kontrolü
         if (wallPositions.Contains(transform.position))
@@ -125,7 +126,7 @@ public class EnemyMovementMiddle : MonoBehaviour
 
     private void SetRandomTargetPosition()
     {
-        startPosition = transform.position;
+        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
 
         for (int i = 0; i < 10; i++)
         {
@@ -138,7 +139,7 @@ public class EnemyMovementMiddle : MonoBehaviour
                 case 3: direction = Vector2.right; break;
             }
 
-            targetPosition = startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance;
+            targetPosition = SnapToGrid(startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance);
 
             if (!wallPositions.Contains(targetPosition))
                 return;
@@ -149,7 +150,7 @@ public class EnemyMovementMiddle : MonoBehaviour
 
     private void SetDirectionalTargetPosition(Vector3 destination)
     {
-        startPosition = transform.position;
+        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
 
         Vector3 direction = Vector3.zero;
 
@@ -163,13 +164,22 @@ public class EnemyMovementMiddle : MonoBehaviour
             direction = new Vector3(0, Mathf.Sign(destination.y - transform.position.y), 0); // Yukarý veya aþaðý hareket
         }
 
-        targetPosition = startPosition + direction * moveDistance;
+        targetPosition = SnapToGrid(startPosition + direction * moveDistance);
 
         // Duvar kontrolü
         if (wallPositions.Contains(targetPosition))
         {
             targetPosition = startPosition; // Duvar varsa hareket etme
         }
+    }
+
+    private Vector3 SnapToGrid(Vector3 position)
+    {
+        return new Vector3(
+            Mathf.Floor(position.x) + 0.5f,
+            Mathf.Floor(position.y) + 0.5f,
+            position.z
+        );
     }
 
     private void CollectWallPositions()
@@ -184,7 +194,7 @@ public class EnemyMovementMiddle : MonoBehaviour
                 Vector3Int tilePosition = new Vector3Int(x, y, 0);
                 if (wallTilemap.HasTile(tilePosition))
                 {
-                    Vector3 worldPosition = wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0);
+                    Vector3 worldPosition = SnapToGrid(wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0));
                     wallPositions.Add(worldPosition);
                 }
             }

@@ -6,12 +6,12 @@ using UnityEngine.Tilemaps;
 public class EnemyMovementBasic : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveDistance = 1f;
-    public float moveDuration = 0.1f;
+    public float moveDistance = 1f; // Dusman bir adimda hareket edecegi mesafe
+    public float moveDuration = 0.1f; // Hareket suresi
 
     [Header("Environment Settings")]
-    public Tilemap wallTilemap;
-    private HashSet<Vector3> wallPositions = new HashSet<Vector3>();
+    public Tilemap wallTilemap; // Duvarla Tilemap
+    private HashSet<Vector3Int> wallPositions = new HashSet<Vector3Int>(); // Duvar pozisyonlar (grid taban)
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
@@ -20,7 +20,7 @@ public class EnemyMovementBasic : MonoBehaviour
 
     private void Awake()
     {
-        CollectWallPositions();
+        CollectWallPositions(); // Duvar pozisyo
     }
 
     public void MoveRandomly()
@@ -40,7 +40,7 @@ public class EnemyMovementBasic : MonoBehaviour
         while (moveTimer < moveDuration)
         {
             moveTimer += Time.deltaTime;
-            float t = Mathf.Sin((moveTimer / moveDuration) * Mathf.PI * 0.5f);
+            float t = Mathf.Sin((moveTimer / moveDuration) * Mathf.PI * 0.5f); // Ease-in-out
             transform.position = Vector3.Lerp(startPosition, targetPosition, t);
             yield return null;
         }
@@ -65,17 +65,18 @@ public class EnemyMovementBasic : MonoBehaviour
 
             targetPosition = startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance;
 
-            if (!wallPositions.Contains(targetPosition))
+            // Hedef pozisyonda duvar yoksa pozisyonu kabul et
+            if (!wallPositions.Contains(wallTilemap.WorldToCell(targetPosition)))
                 return;
         }
 
+        // Hicbir gecerli hedef bulunamazsa, yerinde kal
         targetPosition = startPosition;
     }
 
     private void CollectWallPositions()
     {
         BoundsInt bounds = wallTilemap.cellBounds;
-        TileBase[] allTiles = wallTilemap.GetTilesBlock(bounds);
 
         for (int x = bounds.xMin; x < bounds.xMax; x++)
         {
@@ -84,15 +85,78 @@ public class EnemyMovementBasic : MonoBehaviour
                 Vector3Int tilePosition = new Vector3Int(x, y, 0);
                 if (wallTilemap.HasTile(tilePosition))
                 {
-                    Vector3 worldPosition = wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0);
-                    wallPositions.Add(worldPosition);
+                    wallPositions.Add(tilePosition);
                 }
             }
         }
+
+        Debug.Log($"Toplam duvar pozisyonu: {wallPositions.Count}");
     }
 
     public void ResetMovement()
     {
         hasMoved = false;
+    }
+
+    public bool PlayerDetected()
+    {
+        // Eger oyuncu bulunamiyorsa algilama yapilamaz
+        Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (playerTransform == null) return false;
+
+        Vector3Int enemyGridPos = wallTilemap.WorldToCell(transform.position); // D grid pozisyonu
+        Vector3Int playerGridPos = wallTilemap.WorldToCell(playerTransform.position); // Oyuncunun grid pozisyonu
+
+        // iki nokta arasndaki grid pozisyonlarini al
+        List<Vector3Int> gridPositionsBetween = GetGridPositionsBetween(enemyGridPos, playerGridPos);
+
+        // Arada herhangi bir grid pozisyonunda duvar varsa alg iptal et
+        foreach (Vector3Int gridPosition in gridPositionsBetween)
+        {
+            if (wallPositions.Contains(gridPosition))
+            {
+                Debug.Log("Player ile Enemy arasinda duvar var.");
+                return false;
+            }
+        }
+
+        Debug.Log("Player algilandi!");
+        return true;
+    }
+
+    private List<Vector3Int> GetGridPositionsBetween(Vector3Int start, Vector3Int end)
+    {
+        List<Vector3Int> positions = new List<Vector3Int>();
+
+        int xDiff = Mathf.Abs(end.x - start.x);
+        int yDiff = Mathf.Abs(end.y - start.y);
+
+        int xStep = start.x < end.x ? 1 : -1;
+        int yStep = start.y < end.y ? 1 : -1;
+
+        int error = xDiff - yDiff;
+
+        while (true)
+        {
+            positions.Add(start);
+
+            if (start == end) break;
+
+            int e2 = error * 2;
+
+            if (e2 > -yDiff)
+            {
+                error -= yDiff;
+                start.x += xStep;
+            }
+
+            if (e2 < xDiff)
+            {
+                error += xDiff;
+                start.y += yStep;
+            }
+        }
+
+        return positions;
     }
 }

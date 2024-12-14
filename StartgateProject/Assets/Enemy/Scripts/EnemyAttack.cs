@@ -17,10 +17,8 @@ public class EnemyAttack : MonoBehaviour
     public EnemyState CurrentState // Getter ve Setter
     {
         get { return currentState; }
-        set { currentState = value; } // Setter eklenmiþtir
+        set { currentState = value; }
     }
-
-
     private float stateTimer;
     private GameObject player;
     private EnemyMovementBasic movementComponent;
@@ -68,14 +66,25 @@ public class EnemyAttack : MonoBehaviour
     {
         if (player == null) return;
 
-        float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
-        if (distanceToPlayer <= enemyData.aggroRange)
+        // 
+        if (movementComponent.PlayerDetected()) //
         {
-            currentState = EnemyState.AttackPlayer;
-            stateTimer = 0f;
+            float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
+
+            if (distanceToPlayer <= enemyData.aggroRange)
+            {
+                currentState = EnemyState.AttackPlayer;
+                stateTimer = 0f;
+            }
+            else
+            {
+                currentState = EnemyState.MoveRandomly;
+                stateTimer = enemyData.waitingTime;
+            }
         }
         else
         {
+            Debug.Log("Player duvarin arkasi algilanamadi.");
             currentState = EnemyState.MoveRandomly;
             stateTimer = enemyData.waitingTime;
         }
@@ -86,6 +95,15 @@ public class EnemyAttack : MonoBehaviour
         if (player == null)
         {
             currentState = EnemyState.CheckForPlayer;
+            return;
+        }
+
+        // 
+        if (!movementComponent.PlayerDetected()) // 
+        {
+            Debug.Log("Player artik seks yor, CheckForPlayer'a donuluyor.");
+            currentState = EnemyState.CheckForPlayer;
+            stateTimer = enemyData.waitingTime;
             return;
         }
 

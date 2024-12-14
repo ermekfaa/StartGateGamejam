@@ -17,7 +17,7 @@ MonoBehaviour:
   isTurn: 0
   resistances: 0
   weaknesses: 0
-  aggroRange: 2
+  aggroRange: 5
   waitingTime: 2
   shootRange: 15
   shootFrequency: 1
