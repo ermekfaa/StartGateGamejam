@@ -18,7 +18,7 @@ MonoBehaviour:
   resistances: 0
   weaknesses: 0
   aggroRange: 10
-  waitingTime: 2
+  waitingTime: 0.5
   shootRange: 15
   shootFrequency: 1
   shootAccuracy: 0.8
