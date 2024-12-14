@@ -79,18 +79,9 @@ public class EnemyControllerMiddle : MonoBehaviour
                     CheckForPlayer();
                     checkForPlayerTimer = checkForPlayerCooldown;
                 }
-                StartCoroutine(MoveToLastSeenPosition());
+                MoveToLastSeenPosition();
                 break;
         }
-    }
-
-    private void MoveRandomly()
-    {
-        if (hasMoved) return;
-
-        SetRandomTargetPosition();
-        StartCoroutine(MoveCoroutine());
-        hasMoved = true;
     }
 
     private IEnumerator MoveCoroutine()
@@ -187,47 +178,136 @@ public class EnemyControllerMiddle : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveToLastSeenPosition()
+    private void MoveToLastSeenPosition()
     {
+        if (IsMoving()) return; // Eğer şu anda hareket halindeyse, başka bir hareket başlatma
+
+        // Oyuncunun pozisyonunu al ve normalize et
+        Vector3 playerWorldPosition = player.transform.position;
+        lastSeenPlayerPosition = wallTilemap.WorldToCell(playerWorldPosition);
+
+        // Oyuncunun pozisyonunu debug olarak yazdır
+        Debug.Log($"Player Last Seen Grid Position: {lastSeenPlayerPosition}");
+
+        // Düşmanın mevcut pozisyonunu al
         Vector3Int currentGridPosition = wallTilemap.WorldToCell(transform.position);
 
-        while (currentGridPosition != lastSeenPlayerPosition)
+        // Eğer düşman zaten oyuncunun son görüldüğü pozisyona ulaştıysa dur
+        if (currentGridPosition == lastSeenPlayerPosition)
         {
-            Vector3Int nextStep = GetNextStepTowards(currentGridPosition, lastSeenPlayerPosition);
+            Debug.Log("Enemy is already at the player's last seen position.");
+            currentState = EnemyState.CheckForPlayer;
+            return;
+        }
 
-            if (nextStep == currentGridPosition)
+        // Olası hareket yönlerini tanımla
+        List<Vector3Int> possibleSteps = new List<Vector3Int>
+    {
+        currentGridPosition + Vector3Int.up,
+        currentGridPosition + Vector3Int.down,
+        currentGridPosition + Vector3Int.left,
+        currentGridPosition + Vector3Int.right
+    };
+
+        // Geçerli adımları filtrele (duvar olmayanlar)
+        Vector3Int bestStep = currentGridPosition;
+        float shortestDistance = float.MaxValue;
+
+        foreach (var step in possibleSteps)
+        {
+            if (!wallPositions.Contains(step))
             {
-                currentState = EnemyState.MoveRandomly;
-                lastSeenPlayerPosition = Vector3Int.zero;
-                yield break;
-            }
-
-            targetPosition = wallTilemap.CellToWorld(nextStep) + new Vector3(0.5f, 0.5f, 0f);
-            startPosition = transform.position;
-
-            moveTimer = 0f;
-            while (moveTimer < moveDuration)
-            {
-                moveTimer += Time.deltaTime;
-                float t = Mathf.Sin((moveTimer / moveDuration) * Mathf.PI * 0.5f);
-                transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-                yield return null;
-            }
-
-            transform.position = targetPosition;
-            currentGridPosition = wallTilemap.WorldToCell(transform.position);
-
-            if (PlayerDetected())
-            {
-                currentState = EnemyState.AttackPlayer;
-                lastSeenPlayerPosition = Vector3Int.zero;
-                yield break;
+                // Oyuncunun son görüldüğü pozisyona uzaklığı hesapla
+                float distance = Vector3Int.Distance(step, lastSeenPlayerPosition);
+                if (distance < shortestDistance)
+                {
+                    shortestDistance = distance;
+                    bestStep = step;
+                }
             }
         }
 
-        currentState = EnemyState.CheckForPlayer;
-        lastSeenPlayerPosition = Vector3Int.zero;
+        // Eğer geçerli bir adım yoksa dur
+        if (bestStep == currentGridPosition)
+        {
+            Debug.Log("No valid step found. Enemy stays in place.");
+            currentState = EnemyState.CheckForPlayer;
+            return;
+        }
+
+        // Yeni hedef pozisyonu belirle ve debug olarak yazdır
+        Vector3 targetPosition = wallTilemap.CellToWorld(bestStep) + new Vector3(0.5f, 0.5f, 0f);
+        Debug.Log($"Enemy Target Grid Position: {bestStep}, World Position: {targetPosition}");
+
+        // Hareketi başlat
+        StartCoroutine(MoveToPositionCoroutine(targetPosition));
     }
+
+    private void MoveRandomly()
+    {
+        if (IsMoving()) return; // Eğer şu anda hareket halindeyse, başka bir hareket başlatma
+
+        Vector3Int currentGridPosition = wallTilemap.WorldToCell(transform.position);
+
+        List<Vector3Int> possibleSteps = new List<Vector3Int>
+    {
+        currentGridPosition + Vector3Int.up,
+        currentGridPosition + Vector3Int.down,
+        currentGridPosition + Vector3Int.left,
+        currentGridPosition + Vector3Int.right
+    };
+
+        // Geçerli adımları filtrele (duvar olmayanlar)
+        List<Vector3Int> validSteps = possibleSteps.FindAll(step => !wallPositions.Contains(step));
+
+        if (validSteps.Count > 0)
+        {
+            // Rastgele bir adım seç
+            Vector3Int randomStep = validSteps[Random.Range(0, validSteps.Count)];
+            Vector3 targetPosition = wallTilemap.CellToWorld(randomStep) + new Vector3(0.5f, 0.5f, 0f);
+
+            // Hareketi başlat
+            StartCoroutine(MoveToPositionCoroutine(targetPosition));
+        }
+        else
+        {
+            Debug.Log("No valid random move found. Enemy stays in place.");
+        }
+    }
+
+
+
+    private bool isMoving = false; // Hareket kontrol değişkeni
+
+    private IEnumerator MoveToPositionCoroutine(Vector3 targetPosition)
+    {
+        isMoving = true; // Hareket başlıyor
+        Vector3 startPosition = transform.position;
+        float moveTimer = 0f;
+
+        while (moveTimer < moveDuration)
+        {
+            moveTimer += Time.deltaTime;
+            float t = moveTimer / moveDuration; // Hareketin ilerleme yüzdesi
+            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        transform.position = targetPosition; // Nihai pozisyona ayarla
+        isMoving = false; // Hareket tamamlandı
+    }
+
+    private bool IsMoving()
+    {
+        return isMoving;
+    }
+
+
+
+
+
+
+
 
     private Vector3Int GetNextStepTowards(Vector3Int start, Vector3Int end)
     {
