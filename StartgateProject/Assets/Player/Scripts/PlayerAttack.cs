@@ -3,27 +3,37 @@ using UnityEngine;
 public class PlayerAttack : MonoBehaviour
 {
     [Header("Fireball Settings")]
-    public GameObject fireballPrefab;  // Fireball prefab referansý
-    public BulletData fireballData;   // Fireball için ScriptableObject referansý
-    public Transform firePoint;       // Merminin çýkýþ noktasý
+    public GameObject fireballPrefab;  // Fireball prefab referansï¿½
+    public BulletData fireballData;   // Fireball iï¿½in ScriptableObject referansï¿½
+    public Transform firePoint;       // Merminin ï¿½ï¿½kï¿½ï¿½ noktasï¿½
+
+    [Header("Golem Bomb Settings")]
+    public GameObject golemBombPrefab; // Golem bombasï¿½ prefab referansï¿½
+    public KeyCode golemAttackKey = KeyCode.Q; // Golem bombasï¿½ saldï¿½rï¿½ tuï¿½u
 
     [Header("Attack Settings")]
-    public KeyCode attackKey = KeyCode.E; // Saldýrý tuþu
-    public float attackCooldown = 0.5f;   // Atýþlar arasýndaki bekleme süresi
+    public KeyCode attackKey = KeyCode.E; // Ateï¿½ topu saldï¿½rï¿½ tuï¿½u
+    public float attackCooldown = 0.5f;   // Atï¿½ï¿½lar arasï¿½ndaki bekleme sï¿½resi
 
     private float cooldownTimer = 0f;
 
     private void Update()
     {
-        // Mouse pozisyonuna doðru oyuncuyu döndür
+        // Mouse pozisyonuna doï¿½ru oyuncuyu dï¿½ndï¿½r
         RotateToMouse();
 
-        // Saldýrý için tuþa basýmý kontrol et
+        // Ateï¿½ topu saldï¿½rï¿½sï¿½
         cooldownTimer -= Time.deltaTime;
         if (Input.GetKeyDown(attackKey) && cooldownTimer <= 0f)
         {
             ShootFireball();
-            cooldownTimer = attackCooldown; // Cooldown sýfýrlama
+            cooldownTimer = attackCooldown; // Cooldown sï¿½fï¿½rlama
+        }
+
+        // Golem bombasï¿½ saldï¿½rï¿½sï¿½
+        if (Input.GetKeyDown(golemAttackKey))
+        {
+            ThrowGolemBomb();
         }
     }
 
@@ -37,7 +47,7 @@ public class PlayerAttack : MonoBehaviour
             mousePosition.y - transform.position.y
         );
 
-        transform.right = direction; // Oyuncuyu mouse yönüne döndür
+        transform.right = direction; // Oyuncuyu mouse yï¿½nï¿½ne dï¿½ndï¿½r
     }
 
     private void ShootFireball()
@@ -48,7 +58,7 @@ public class PlayerAttack : MonoBehaviour
             return;
         }
 
-        // Fireball oluþtur ve mouse yönüne doðru hareket ettir
+        // Fireball oluï¿½tur ve mouse yï¿½nï¿½ne doï¿½ru hareket ettir
         GameObject fireball = Instantiate(fireballPrefab, firePoint.position, firePoint.rotation);
 
         Fireball fireballScript = fireball.GetComponent<Fireball>();
@@ -58,4 +68,31 @@ public class PlayerAttack : MonoBehaviour
             fireballScript.owner = gameObject;
         }
     }
+
+    private void ThrowGolemBomb()
+    {
+        if (golemBombPrefab == null || firePoint == null)
+        {
+            Debug.LogError("Golem Bomb Prefab veya FirePoint eksik!");
+            return;
+        }
+
+        // Golem bombasÄ± oluÅŸtur
+        GameObject golemBomb = Instantiate(golemBombPrefab, firePoint.position, firePoint.rotation);
+
+        Rigidbody2D rb = golemBomb.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            // BombayÄ± ileri doÄŸru fÄ±rlat
+            rb.linearVelocity = firePoint.right * 10f; // FÄ±rlatma hÄ±zÄ±
+        }
+
+        // BombanÄ±n partikÃ¼l efektini baÅŸlat
+        ParticleSystem particleSystem = golemBomb.GetComponentInChildren<ParticleSystem>();
+        if (particleSystem != null)
+        {
+            particleSystem.Play();
+        }
+    }
+
 }
