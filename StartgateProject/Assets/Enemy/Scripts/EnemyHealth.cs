@@ -38,7 +38,16 @@ public class EnemyHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log($"{enemyData.enemyName} has died.");
-        // Düþman öldüðünde yapýlacak iþlemler burada
-        Destroy(gameObject); // Örneðin, sahneden kaldýrma
+        // Ölme animasyonu veya efektlerini burada yapabilirsiniz
+        Debug.Log(gameObject.name + " öldü!");
+
+        // EnemyManager'daki EnemyDefeated fonksiyonunu çaðýr
+        GameObject manager = GameObject.Find("EnemyManager");
+        if (manager != null)
+        {
+            manager.GetComponent<EnemyManager>().EnemyDefeated();
+        }
+
+        Destroy(gameObject); // Düþmaný yok et
     }
 }

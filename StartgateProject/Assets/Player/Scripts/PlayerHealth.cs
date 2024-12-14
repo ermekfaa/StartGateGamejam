@@ -47,8 +47,13 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player has died.");
-        // Oyuncu öldüðünde yapýlacak iþlemler burada
-        // Örneðin: Oyunu durdur, yeniden doðma ekraný aç
-        // Þimdilik sadece konsola yazdýrýyoruz
+        // EnemyManager'daki EnemyDefeated fonksiyonunu çaðýr
+        GameObject manager = GameObject.Find("EnemyManager");
+        if (manager != null)
+        {
+            manager.GetComponent<EnemyManager>().EnemyDefeated();
+        }
+        Destroy(gameObject); // Düþmaný yok et
+
     }
 }

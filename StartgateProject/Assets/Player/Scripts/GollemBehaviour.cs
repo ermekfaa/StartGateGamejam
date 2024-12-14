@@ -47,10 +47,22 @@ public class GollemBehaviour : MonoBehaviour
 
     private void AttackTarget()
     {
-        // Düþman yok ediliyor
-        Debug.Log($"Golem {target.name} hedefine saldýrýyor!");
-        Destroy(target.gameObject); // Hedefi yok et
-        Destroy(gameObject); // Golem kendini de yok eder
+        // Hedefte Health script'i var mý kontrol et
+        EnemyHealth targetHealth = target.GetComponent<EnemyHealth>();
+
+        if (targetHealth != null)
+        {
+            int damage = 20; // Golem'in vereceði hasar
+            Debug.Log($"Golem {target.name} hedefine {damage} hasar veriyor!");
+            targetHealth.TakeDamage(damage); // Hasar uygula
+        }
+        else
+        {
+            Debug.LogWarning($"Hedef {target.name} hasar alabilecek bir Health script'ine sahip deðil!");
+        }
+
+        // (Opsiyonel) Golem kendini yok eder
+        Destroy(gameObject);
     }
 
     private void FindClosestEnemy()
