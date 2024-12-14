@@ -6,94 +6,29 @@ using UnityEngine.Tilemaps;
 public class EnemyMovementMiddle : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveDistance = 1f;
-
-    [Header("Detection Settings")]
-    public Transform player; // Oyuncunun referansý
-
-    [Header("Enemy Data")]
-    public EnemyData enemyData; // EnemyData ScriptableObject referansý
+    public float moveDistance = 1f; // Düþman bir adýmda hareket edeceði mesafe
+    public float moveDuration = 0.1f; // Hareket süresi
 
     [Header("Environment Settings")]
-    public Tilemap wallTilemap;
-    private HashSet<Vector3> wallPositions = new HashSet<Vector3>();
+    public Tilemap wallTilemap; // Duvar Tilemap
+    private HashSet<Vector3Int> wallPositions = new HashSet<Vector3Int>(); // Duvar pozisyonlarý (grid tabanlý)
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
-    private Vector3 lastSeenPlayerPosition; // Oyuncunun son görüldüðü pozisyon
-    private float moveTimer; // Hareket zamanlayýcýsý
+    private float moveTimer;
     private bool hasMoved;
-    private bool playerDetected;
-    private bool movingToLastSeen; // Son görülen pozisyona mý gidiyor
 
-    private EnemyAttack enemyAttack;
+    private Vector3? lastSeenPlayerPosition = null; // Oyuncunun en son görüldüðü pozisyon
+    private bool isMovingToLastSeenPosition = false; // Son görülen pozisyona hareket ediyor mu?
 
     private void Awake()
     {
         CollectWallPositions();
-        enemyAttack = GetComponent<EnemyAttack>();
-    }
-
-    private void Update()
-    {
-        DetectPlayer();
-
-        if (playerDetected)
-        {
-            Debug.Log("Player detected: Chasing player");
-            enemyAttack.CurrentState = EnemyAttack.EnemyState.AttackPlayer;
-            hasMoved = false; // Hareketi durdur
-        }
-        else if (movingToLastSeen)
-        {
-            Debug.Log("Moving to last seen player position");
-            MoveToLastSeenPosition();
-        }
-        else
-        {
-            Debug.Log("Moving randomly");
-            enemyAttack.CurrentState = EnemyAttack.EnemyState.MoveRandomly;
-            MoveRandomly();
-        }
-    }
-
-    private void DetectPlayer()
-    {
-        if (player == null) return;
-
-        playerDetected = Vector3.Distance(SnapToGrid(transform.position), SnapToGrid(player.position)) <= enemyData.aggroRange;
-        if (playerDetected)
-        {
-            lastSeenPlayerPosition = SnapToGrid(player.position); // Son görülen pozisyonu güncelle
-            movingToLastSeen = false; // Son görülen pozisyona gitmeye gerek yok
-        }
-        else if (!movingToLastSeen)
-        {
-            movingToLastSeen = true; // Oyuncuyu kaybettiðinde son görülen pozisyona git
-        }
-    }
-
-    private void MoveToLastSeenPosition()
-    {
-        if (hasMoved) return;
-
-        // Eðer son görülen pozisyona ulaþýldýysa
-        if (SnapToGrid(transform.position) == lastSeenPlayerPosition)
-        {
-            movingToLastSeen = false;
-            ResetMovement();
-            return;
-        }
-
-        // Son görülen pozisyona doðru hareket
-        SetDirectionalTargetPosition(lastSeenPlayerPosition);
-        StartCoroutine(MoveCoroutine());
-        hasMoved = true;
     }
 
     public void MoveRandomly()
     {
-        if (hasMoved) return;
+        if (hasMoved || isMovingToLastSeenPosition) return;
 
         SetRandomTargetPosition();
         StartCoroutine(MoveCoroutine());
@@ -102,31 +37,30 @@ public class EnemyMovementMiddle : MonoBehaviour
 
     private IEnumerator MoveCoroutine()
     {
-        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
-        moveTimer = 0f; // Timer sýfýrlandý
+        startPosition = transform.position;
+        moveTimer = 0f;
 
-        while (moveTimer < enemyData.waitingTime * 0.5f) // Hýzý artýrmak için bekleme süresi azaltýldý
+        while (moveTimer < moveDuration)
         {
             moveTimer += Time.deltaTime;
-            float t = Mathf.Sin((moveTimer / (enemyData.waitingTime * 0.5f)) * Mathf.PI * 0.5f);
+            float t = Mathf.Sin((moveTimer / moveDuration) * Mathf.PI * 0.5f); // Ease-in-out
             transform.position = Vector3.Lerp(startPosition, targetPosition, t);
             yield return null;
         }
 
-        transform.position = SnapToGrid(targetPosition); // Hedef pozisyon grid'e oturtulur
+        transform.position = targetPosition;
 
-        // Duvar kontrolü
-        if (wallPositions.Contains(transform.position))
+        // Eðer oyuncunun son görüldüðü pozisyona hareket ediliyorsa, pozisyona ulaþtýk mý kontrol et
+        if (isMovingToLastSeenPosition && Vector3.Distance(transform.position, lastSeenPlayerPosition.Value) < 0.1f)
         {
-            transform.position = startPosition; // Geçersiz pozisyonda ise geri döner
+            isMovingToLastSeenPosition = false;
+            lastSeenPlayerPosition = null; // Hedefe ulaþýldýðýnda sýfýrla
         }
-
-        hasMoved = false;
     }
 
     private void SetRandomTargetPosition()
     {
-        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
+        startPosition = transform.position;
 
         for (int i = 0; i < 10; i++)
         {
@@ -139,53 +73,20 @@ public class EnemyMovementMiddle : MonoBehaviour
                 case 3: direction = Vector2.right; break;
             }
 
-            targetPosition = SnapToGrid(startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance);
+            targetPosition = startPosition + new Vector3(direction.x, direction.y, 0f) * moveDistance;
 
-            if (!wallPositions.Contains(targetPosition))
+            // Hedef pozisyonda duvar yoksa pozisyonu kabul et
+            if (!wallPositions.Contains(wallTilemap.WorldToCell(targetPosition)))
                 return;
         }
 
-        targetPosition = startPosition; // Geçerli bir pozisyon bulunamazsa hareket etmez
-    }
-
-    private void SetDirectionalTargetPosition(Vector3 destination)
-    {
-        startPosition = SnapToGrid(transform.position); // Baþlangýç pozisyonu grid'e oturtulur
-
-        Vector3 direction = Vector3.zero;
-
-        // Yatay ve dikey hareketi kontrol eder
-        if (Mathf.Abs(destination.x - transform.position.x) > Mathf.Abs(destination.y - transform.position.y))
-        {
-            direction = new Vector3(Mathf.Sign(destination.x - transform.position.x), 0, 0); // Saða veya sola hareket
-        }
-        else
-        {
-            direction = new Vector3(0, Mathf.Sign(destination.y - transform.position.y), 0); // Yukarý veya aþaðý hareket
-        }
-
-        targetPosition = SnapToGrid(startPosition + direction * moveDistance);
-
-        // Duvar kontrolü
-        if (wallPositions.Contains(targetPosition))
-        {
-            targetPosition = startPosition; // Duvar varsa hareket etme
-        }
-    }
-
-    private Vector3 SnapToGrid(Vector3 position)
-    {
-        return new Vector3(
-            Mathf.Floor(position.x) + 0.5f,
-            Mathf.Floor(position.y) + 0.5f,
-            position.z
-        );
+        // Hiçbir geçerli hedef bulunamazsa, yerinde kal
+        targetPosition = startPosition;
     }
 
     private void CollectWallPositions()
     {
         BoundsInt bounds = wallTilemap.cellBounds;
-        TileBase[] allTiles = wallTilemap.GetTilesBlock(bounds);
 
         for (int x = bounds.xMin; x < bounds.xMax; x++)
         {
@@ -194,15 +95,101 @@ public class EnemyMovementMiddle : MonoBehaviour
                 Vector3Int tilePosition = new Vector3Int(x, y, 0);
                 if (wallTilemap.HasTile(tilePosition))
                 {
-                    Vector3 worldPosition = SnapToGrid(wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0));
-                    wallPositions.Add(worldPosition);
+                    wallPositions.Add(tilePosition);
                 }
             }
         }
+
+        Debug.Log($"Toplam duvar pozisyonu: {wallPositions.Count}");
     }
 
     public void ResetMovement()
     {
         hasMoved = false;
+    }
+
+    public bool PlayerDetected()
+    {
+        Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (playerTransform == null) return false;
+
+        Vector3Int enemyGridPos = wallTilemap.WorldToCell(transform.position);
+        Vector3Int playerGridPos = wallTilemap.WorldToCell(playerTransform.position);
+
+        List<Vector3Int> gridPositionsBetween = GetGridPositionsBetween(enemyGridPos, playerGridPos);
+
+        foreach (Vector3Int gridPosition in gridPositionsBetween)
+        {
+            if (wallPositions.Contains(gridPosition))
+            {
+                Debug.Log("Player ile Enemy arasýnda duvar var.");
+                return false;
+            }
+        }
+
+        Debug.Log("Player algýlandý!");
+        lastSeenPlayerPosition = playerTransform.position; // Oyuncunun pozisyonunu kaydet
+        return true;
+    }
+
+    public void MoveToLastSeenPosition()
+    {
+        if (lastSeenPlayerPosition == null || isMovingToLastSeenPosition) return;
+
+        Vector3Int enemyGridPos = wallTilemap.WorldToCell(transform.position);
+        Vector3Int lastSeenGridPos = wallTilemap.WorldToCell(lastSeenPlayerPosition.Value);
+
+        if (enemyGridPos == lastSeenGridPos)
+        {
+            isMovingToLastSeenPosition = false;
+            lastSeenPlayerPosition = null;
+            return;
+        }
+
+        // Adým adým hareket
+        Vector3 direction = (lastSeenPlayerPosition.Value - transform.position).normalized;
+        targetPosition = transform.position + new Vector3(direction.x, direction.y, 0f) * moveDistance;
+
+        if (!wallPositions.Contains(wallTilemap.WorldToCell(targetPosition)))
+        {
+            StartCoroutine(MoveCoroutine());
+            isMovingToLastSeenPosition = true;
+        }
+    }
+
+    private List<Vector3Int> GetGridPositionsBetween(Vector3Int start, Vector3Int end)
+    {
+        List<Vector3Int> positions = new List<Vector3Int>();
+
+        int xDiff = Mathf.Abs(end.x - start.x);
+        int yDiff = Mathf.Abs(end.y - start.y);
+
+        int xStep = start.x < end.x ? 1 : -1;
+        int yStep = start.y < end.y ? 1 : -1;
+
+        int error = xDiff - yDiff;
+
+        while (true)
+        {
+            positions.Add(start);
+
+            if (start == end) break;
+
+            int e2 = error * 2;
+
+            if (e2 > -yDiff)
+            {
+                error -= yDiff;
+                start.x += xStep;
+            }
+
+            if (e2 < xDiff)
+            {
+                error += xDiff;
+                start.y += yStep;
+            }
+        }
+
+        return positions;
     }
 }
