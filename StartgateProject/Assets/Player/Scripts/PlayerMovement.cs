@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Tilemaps; // Tilemap için gerekli
+using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour
@@ -90,13 +90,8 @@ public class PlayerMovement : MonoBehaviour
                 {
                     Vector3 worldPosition = wallTilemap.CellToWorld(tilePosition) + new Vector3(0.5f, 0.5f, 0); // Tile'larýn merkezine hizala
                     wallPositions.Add(worldPosition);
-
-                    // Pozisyonu konsola yazdýr
-                    Debug.Log($"Duvar Pozisyonu: {worldPosition}");
                 }
             }
         }
-
-        Debug.Log($"Toplam {wallPositions.Count} duvar pozisyonu kaydedildi.");
     }
 }
