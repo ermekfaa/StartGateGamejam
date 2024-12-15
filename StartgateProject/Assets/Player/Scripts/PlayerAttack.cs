@@ -10,12 +10,16 @@ public class PlayerAttack : MonoBehaviour
     [Header("Golem Bomb Settings")]
     public GameObject golemBombPrefab; // Golem bombası prefab referansı
     public KeyCode golemAttackKey = KeyCode.Q; // Golem bombası saldırı tuşu
+    public int maxGolemBombs = 3; // Maksimum golem bombası sayısı
+    public float golemAttackCooldown = 2f; // Golem bombası cooldown süresi
 
     [Header("Attack Settings")]
     public KeyCode attackKey = KeyCode.E; // Ateş topu saldırı tuşu
     public float attackCooldown = 0.5f;   // Atışlar arasındaki bekleme süresi
 
     private float cooldownTimer = 0f;
+    private float golemCooldownTimer = 0f; // Golem bombası için cooldown sayacı
+    private int currentGolemBombs = 0; // Atılmış olan golem bombası sayısı
 
     private void Update()
     {
@@ -31,9 +35,12 @@ public class PlayerAttack : MonoBehaviour
         }
 
         // Golem bombası saldırısı
-        if (Input.GetKeyDown(golemAttackKey))
+        golemCooldownTimer -= Time.deltaTime;
+        if (Input.GetKeyDown(golemAttackKey) && golemCooldownTimer <= 0f && currentGolemBombs < maxGolemBombs)
         {
             ThrowGolemBomb();
+            currentGolemBombs++; // Kullanılan golem bombası sayısını artır
+            golemCooldownTimer = golemAttackCooldown; // Cooldown başlat
         }
     }
 
@@ -61,7 +68,6 @@ public class PlayerAttack : MonoBehaviour
             0 // Z ekseni sabit
         );
     }
-
 
     private void ShootFireball()
     {
@@ -106,5 +112,12 @@ public class PlayerAttack : MonoBehaviour
         {
             particleSystem.Play();
         }
+    }
+
+    // Level geçişinde sıfırlama
+    public void ResetGolemBombs()
+    {
+        currentGolemBombs = 0; // Golem bombası sayısını sıfırla
+        golemCooldownTimer = 0f; // Cooldown sıfırla
     }
 }

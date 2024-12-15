@@ -171,7 +171,7 @@ public class EnemyAssassinController : MonoBehaviour
     {
         Debug.Log("Sword stab initiated.");
 
-        // Swing the sword back
+        // Kýlýcý geri çek
         float elapsedTime = 0f;
         Quaternion initialRotation = swordTransform.localRotation;
         Quaternion swingBackRotation = Quaternion.Euler(0, 0, swordSwingBackAngle);
@@ -183,7 +183,7 @@ public class EnemyAssassinController : MonoBehaviour
             yield return null;
         }
 
-        // Stab the sword forward
+        // Kýlýcý ileri sapla
         elapsedTime = 0f;
         while (elapsedTime < swordStabDuration / 2)
         {
@@ -194,18 +194,38 @@ public class EnemyAssassinController : MonoBehaviour
 
         Debug.Log("Sword stab completed.");
 
-        // Check for player damage
+        // Hasar kontrolü (Player'ý bul ve hasar uygula)
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, playerLayer);
+
+        Debug.Log($"Players hit: {hitPlayers.Length}"); // Algýlanan oyuncu sayýsýný yazdýr
 
         foreach (Collider2D hit in hitPlayers)
         {
             if (hit.CompareTag("Player"))
             {
                 Debug.Log("Player hit by sword!");
-                // Apply damage to player
+
+                // PlayerHealth bileþenini kontrol et
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+
+                if (playerHealth != null)
+                {
+                    int damage = 10; // Verilen hasar miktarý
+                    playerHealth.TakeDamage(damage); // Hasarý uygula
+                    Debug.Log($"Player took {damage} damage. Current health: {playerHealth}");
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerHealth component bulunamadý!");
+                }
+            }
+            else
+            {
+                Debug.Log("Hit object is not the player. Tag: " + hit.tag);
             }
         }
     }
+
 
     private bool PlayerDetected()
     {
