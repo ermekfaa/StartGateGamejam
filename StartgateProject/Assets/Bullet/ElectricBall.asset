@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ElectricBall
   m_EditorClassIdentifier: 
   bulletSprite: {fileID: 0}
-  bulletSpeed: 10
-  bulletDamage: 1
+  bulletSpeed: 20
+  bulletDamage: 10
   bulletPierce: 0
   bulletLifetime: 5

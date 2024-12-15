@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveDistance = 1f; // Karakterin her hareket ettiðinde ilerleyeceði mesafe
-    public float moveDuration = 0.1f; // Hareketin süresi (saniye cinsinden)
+    public float moveDuration = 0.3f; // Hareketin süresi (saniye cinsinden)
     public Tilemap wallTilemap; // Engelleri içeren Tilemap
     private HashSet<Vector3> wallPositions = new HashSet<Vector3>(); // Duvar pozisyonlarýný saklar
 

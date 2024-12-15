@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bulletSprite: {fileID: 0}
   bulletSpeed: 10
-  bulletDamage: 1
-  bulletPierce: -5069
+  bulletDamage: 5
+  bulletPierce: -5078
   bulletLifetime: 5

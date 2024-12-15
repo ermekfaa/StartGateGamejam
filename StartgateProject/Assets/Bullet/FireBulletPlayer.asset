@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FireBulletPlayer
   m_EditorClassIdentifier: 
   bulletSprite: {fileID: 0}
-  bulletSpeed: 10
-  bulletDamage: 1
-  bulletPierce: 1
+  bulletSpeed: 15
+  bulletDamage: 5
+  bulletPierce: -45
   bulletLifetime: 5
