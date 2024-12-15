@@ -47,8 +47,13 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player has died.");
-        // Oyuncu öldüðünde yapýlacak iþlemler burada
-        // Örneðin: Oyunu durdur, yeniden doðma ekraný aç
-        // Þimdilik sadece konsola yazdýrýyoruz
+
+        // Oyuncunun yok edilmesi veya pasif hale getirilmesi
+        gameObject.SetActive(false); // Oyuncuyu sahneden kaldýr
+
+        // Game Over ekraný veya baþka bir iþlem baþlatma
+        // Örneðin:
+        //GameManager.Instance.ShowGameOverScreen();
     }
+
 }
