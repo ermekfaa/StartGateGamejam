@@ -227,14 +227,21 @@ public class EnemyBossController : MonoBehaviour
 
     private void UpdateHealthBar()
     {
+        Debug.LogError("HEalthBar1");
+
         if (healthBar != null)
         {
+            Debug.LogError("HEalthBar2");
+
+            // Sağlık bar değerini güncelle (0 - 1 arası normalize edilir)
             healthBar.value = currentHealth / maxHealth;
 
-            Color healthColor = Color.Lerp(Color.red, Color.green, currentHealth / maxHealth);
-            healthBar.fillRect.GetComponent<Image>().color = healthColor;
+            // Barın rengini hep kırmızıda bırak
+            healthBar.fillRect.GetComponent<Image>().color = Color.red;
         }
     }
+
+
 
     public void TakeDamage(float damage)
     {
