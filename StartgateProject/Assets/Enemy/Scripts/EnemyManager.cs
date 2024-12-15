@@ -2,33 +2,62 @@ using UnityEngine;
 
 public class EnemyManager : MonoBehaviour
 {
-    public int enemyCount; // Aktif düþman sayýsýný tutar
+    public GameObject gate1; // Gate referansý
+    public GameObject gate2; // Gate referansý
 
     void Start()
     {
-        // Baþlangýçta düþman sayýsýný tüm düþmanlarý sayarak belirliyoruz
-        enemyCount = GameObject.FindGameObjectsWithTag("Enemy").Length;
-        Debug.Log("Baþlangýçtaki düþman sayýsý: " + enemyCount);
+        // Kapýlarý baþlangýçta gizle
+        if (gate1 != null)
+        {
+            gate1.SetActive(false);
+        }
+        if (gate2 != null)
+        {
+            gate2.SetActive(false);
+        }
+
+        // Ýlk düþman kontrolünü yap
+        CheckEnemies();
     }
 
-    // Düþman öldüðünde bu fonksiyon çaðrýlmalý
-    public void EnemyDefeated()
+    private void Update()
     {
-        enemyCount--; // Düþman sayýsýný azalt
+        // Sürekli düþman sayýsýný kontrol et
+        CheckEnemies();
+    }
+
+    private void CheckEnemies()
+    {
+        // Dinamik olarak düþman sayýsýný kontrol et
+        int enemyCount = GameObject.FindGameObjectsWithTag("Enemy").Length;
+
         Debug.Log("Kalan düþman: " + enemyCount);
 
-        // Düþman sayýsý sýfýra ulaþýnca bir iþlem tetikle
         if (enemyCount <= 0)
         {
-            Debug.Log("Tüm düþmanlar öldü! Portal açýlýyor.");
-            OpenPortals(); // Portal açma fonksiyonunu çaðýr
+            OpenPortals();
         }
     }
+    public void EnemyDefeated()
+    {
+        //enemyCount--;
+        Debug.Log("Kalan düþman: "  );
 
-    // Portal açma iþlemi burada yapýlýr
-    void OpenPortals()
+        //
+    }
+
+    private void OpenPortals()
     {
         Debug.Log("Portal açýldý!");
-        // Portal objelerini aktif et
+
+        if (gate1 != null)
+        {
+            gate1.SetActive(true); // Gate'i aktif et
+        }
+        if (gate2 != null)
+        {
+            gate2.SetActive(true); // Gate'i aktif et
+        }
     }
 }
