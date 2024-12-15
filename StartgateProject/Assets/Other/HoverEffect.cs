@@ -1,29 +1,34 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
 using TMPro;
 
-public class HoverEffectWithPlayer : MonoBehaviour
+public class HoverEffectWithVisualStars : MonoBehaviour
 {
     [Header("Text Settings")]
-    public string hoverText = "Fire"; // Hoverland���nda g�sterilecek metin
-    public Vector3 textOffset = new Vector3(-1.5f, 0, 0); // Metnin obje konumuna g�re offset'i
+    public string hoverText = "Custom Hover Text"; // Hover sırasında gösterilecek metin
+    public Vector3 textOffset = new Vector3(-1.5f, 0, 0); // Hover metni için offset
+    public Vector3 starsOffset = new Vector3(0, -0.5f, 0); // Yıldızların obje altına konumu için offset
 
     [Header("Prefab Settings")]
-    public GameObject textPrefab; // TMP i�eren prefab
-    private GameObject instantiatedText; // Dinamik olarak olu�turulan metin objesi
+    public GameObject textPrefab; // TMP içeren prefab
+    public GameObject starPrefab; // Yıldız sprite prefab
+    private GameObject instantiatedText; // Dinamik olarak oluşturulan metin objesi
+    private List<GameObject> instantiatedStars = new List<GameObject>(); // Dinamik olarak oluşturulan yıldız objeleri
 
     private SpriteRenderer spriteRenderer;
-    private Color originalColor; // Objeyi hover �ncesi eski haline d�nd�rmek i�in
+    private Color originalColor; // Objeyi hover öncesi eski haline döndürmek için
 
     [Header("Hover Settings")]
     public Color brighterWhite = new Color(1.2f, 1.2f, 1.2f, 1f); // Parlak beyaz hover rengi
-    public float colorTransitionSpeed = 5f; // Renk ge�i� h�z�
+    public float colorTransitionSpeed = 5f; // Renk geçiş hızı
 
     [Header("Player Proximity Settings")]
-    public Transform player; // Player'�n Transform'u
-    public float activationDistance = 3f; // Player ile obje aras�ndaki mesafe
+    public Transform player; // Player'ın Transform'u
+    public float activationDistance = 3f; // Player ile obje arasındaki mesafe
 
-    private bool isHovering = false; // Hover etkisinin aktif olup olmad���n� kontrol eder
-    private bool isPlayerNearby = false; // Player yak�n m� kontrol�
+    private bool isHovering = false; // Hover etkisinin aktif olup olmadığını kontrol eder
+    private bool isPlayerNearby = false; // Player yakın mı kontrolü
+    private int randomNumber; // Rastgele sayı (1 ila 5 arasında)
 
     void Start()
     {
@@ -32,18 +37,21 @@ public class HoverEffectWithPlayer : MonoBehaviour
         {
             originalColor = spriteRenderer.color; // Orijinal rengi kaydet
         }
+
+        // Rastgele bir sayı belirle (1 ila 5 arasında)
+        randomNumber = Random.Range(1, 6);
     }
 
     void Update()
     {
-        // Player mesafe kontrol�
+        // Player mesafe kontrolü
         if (player != null)
         {
             float distanceToPlayer = Vector3.Distance(player.position, transform.position);
             isPlayerNearby = distanceToPlayer <= activationDistance;
         }
 
-        // Hover veya player yak�nsa parlakl�k uygula
+        // Hover veya player yakınsa parlaklık uygula
         if (spriteRenderer != null)
         {
             if (isHovering || isPlayerNearby)
@@ -59,30 +67,45 @@ public class HoverEffectWithPlayer : MonoBehaviour
 
     void OnMouseEnter()
     {
-        isHovering = true; // Mouse hover ba�lad���nda
+        isHovering = true; // Mouse hover başladığında
         ShowText();
+        ShowStars(); // Yıldızları göster
     }
 
     void OnMouseExit()
     {
-        isHovering = false; // Mouse hover bitti�inde
+        isHovering = false; // Mouse hover bittiğinde
         HideText();
+        HideStars(); // Yıldızları gizle
     }
 
     void ShowText()
     {
-        // TMP Text olu�turma
+        // TMP Text oluşturma
         if (textPrefab != null && instantiatedText == null)
         {
             Vector3 textPosition = transform.position + textOffset; // Offset ile pozisyon hesapla
             instantiatedText = Instantiate(textPrefab, textPosition, Quaternion.identity);
 
-            // TMP bile�enini bul ve metin ayarlar�n� uygula
+            // TMP bileşenini bul ve metni ayarla
             TextMeshPro textMeshPro = instantiatedText.GetComponent<TextMeshPro>();
             if (textMeshPro != null)
             {
-                textMeshPro.text = hoverText; // Metni ayarla
+                textMeshPro.text = hoverText; // Inspector'dan düzenlenebilir metin
             }
+        }
+    }
+
+    void ShowStars()
+    {
+        HideStars(); // Eski yıldızları sil
+
+        // Rastgele sayıya göre yıldızları oluştur
+        for (int i = 0; i < randomNumber; i++)
+        {
+            Vector3 starPosition = transform.position + starsOffset + new Vector3(i * 0.5f, 0, 0); // Yıldızları yan yana diz
+            GameObject star = Instantiate(starPrefab, starPosition, Quaternion.identity);
+            instantiatedStars.Add(star); // Oluşturulan yıldızları listeye ekle
         }
     }
 
@@ -93,5 +116,15 @@ public class HoverEffectWithPlayer : MonoBehaviour
         {
             Destroy(instantiatedText);
         }
+    }
+
+    void HideStars()
+    {
+        // Eski yıldızları yok et
+        foreach (GameObject star in instantiatedStars)
+        {
+            Destroy(star);
+        }
+        instantiatedStars.Clear(); // Listeyi temizle
     }
 }
