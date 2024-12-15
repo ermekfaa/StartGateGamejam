@@ -2,10 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
-public class ElectricBossController : MonoBehaviour
+public class EnemyBossController : MonoBehaviour
 {
     public enum BossState { Idle, Chase, AttackWithSword, FireElectricBall }
+
+    [Header("Health Settings")]
+    public float maxHealth = 100f; // Boss'un maksimum sağlığı
+    private float currentHealth; // Boss'un mevcut sağlığı
+    public Slider healthBar; // Sağlık barı (UI Slider)
 
     [Header("Movement Settings")]
     public float tileSize = 1.5f; // Tile boyutu
@@ -43,8 +49,13 @@ public class ElectricBossController : MonoBehaviour
         {
             Debug.LogError("Player object not found in the scene!");
         }
+
         CollectWallPositions();
         targetPosition = transform.position;
+
+        // Sağlığı maksimuma ayarla ve sağlık barını güncelle
+        currentHealth = maxHealth;
+        UpdateHealthBar();
     }
 
     private void Update()
@@ -153,26 +164,21 @@ public class ElectricBossController : MonoBehaviour
             return;
         }
 
-        // Elektrik topu oluştur ve yönlendir
         GameObject electricBall = Instantiate(electricBallPrefab, firePoint.position, firePoint.rotation);
         Rigidbody2D rb = electricBall.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             Vector2 direction = (player.transform.position - firePoint.position).normalized;
-            rb.linearVelocity = direction * 5f; // Elektrik topu hızı
+            rb.linearVelocity = direction * 5f;
         }
         else
         {
             Debug.LogError("Electric Ball Prefab does not have a Rigidbody2D component!");
         }
-
-        Debug.Log("Electric Ball fired!");
     }
 
     private IEnumerator SwordAttack()
     {
-        Debug.Log("Sword attack initiated.");
-
         float elapsedTime = 0f;
         Quaternion initialRotation = swordTransform.localRotation;
         Quaternion swingBackRotation = Quaternion.Euler(0, 0, swordSwingBackAngle);
@@ -192,15 +198,12 @@ public class ElectricBossController : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log("Sword attack completed.");
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, swordAttackRange, playerLayer);
-
         foreach (Collider2D hit in hitPlayers)
         {
             if (hit.CompareTag("Player"))
             {
                 Debug.Log("Player hit by sword!");
-                // Apply damage to player
             }
         }
     }
@@ -220,15 +223,28 @@ public class ElectricBossController : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"Collected {wallPositions.Count} wall positions.");
     }
 
-    private void OnDrawGizmosSelected()
+    private void UpdateHealthBar()
     {
-        if (attackPoint == null) return;
+        if (healthBar != null)
+        {
+            healthBar.value = currentHealth / maxHealth;
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(attackPoint.position, swordAttackRange);
+            Color healthColor = Color.Lerp(Color.red, Color.green, currentHealth / maxHealth);
+            healthBar.fillRect.GetComponent<Image>().color = healthColor;
+        }
+    }
+
+    public void TakeDamage(float damage)
+    {
+        currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        UpdateHealthBar();
+
+        if (currentHealth <= 0)
+        {
+            Destroy(gameObject);
+        }
     }
 }

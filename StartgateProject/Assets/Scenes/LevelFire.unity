@@ -5620,6 +5620,10 @@ PrefabInstance:
       propertyPath: wallTilemap
       value: 
       objectReference: {fileID: 628904309}
+    - target: {fileID: 6302365250375163263, guid: 0ef08c60d73e6b84d8ca7d1add3dd0cc, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6312865616013157015, guid: 0ef08c60d73e6b84d8ca7d1add3dd0cc, type: 3}
       propertyPath: golemBombPrefab
       value: 
