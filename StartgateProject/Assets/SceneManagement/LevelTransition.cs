@@ -112,7 +112,7 @@ namespace IgnoreSolutions
                     SceneManager.LoadScene("LevelWind");
                     break;
                 case "Gate3":
-                    SceneManager.LoadScene("LevelLava");
+                    SceneManager.LoadScene("LevelFire");
                     break;
                 case "Gate4":
                     SceneManager.LoadScene("LevelBoss");

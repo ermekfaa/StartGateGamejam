@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using static UnityEditor.Rendering.FilterWindow;
+
 
 [CreateAssetMenu(fileName = "EnemyData", menuName = "Scriptable Objects/EnemyData")]
 public class EnemyData : ScriptableObject
