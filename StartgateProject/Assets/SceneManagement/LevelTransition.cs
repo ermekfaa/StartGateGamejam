@@ -102,17 +102,20 @@ namespace IgnoreSolutions
         {
             switch (gateName)
             {
-                case "LavaGate":
-                    SceneManager.LoadScene("Level1");
+                case "Gate0":
+                    SceneManager.LoadScene("LevelNature");
                     break;
                 case "Gate1":
-                    SceneManager.LoadScene("Level2");
+                    SceneManager.LoadScene("LevelWater");
                     break;
                 case "Gate2":
-                    SceneManager.LoadScene("Level3");
+                    SceneManager.LoadScene("LevelWind");
                     break;
                 case "Gate3":
-                    SceneManager.LoadScene("Level4");
+                    SceneManager.LoadScene("LevelLava");
+                    break;
+                case "Gate4":
+                    SceneManager.LoadScene("LevelBoss");
                     break;
                 default:
                     Debug.LogError("Tanımlanmamış bir gate kullanılıyor: " + gateName);
