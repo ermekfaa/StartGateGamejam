@@ -39,17 +39,29 @@ public class PlayerAttack : MonoBehaviour
 
     private void RotateFirePointToMouse()
     {
+        // Mouse'un dünya koordinatını al
         Vector3 mousePosition = Input.mousePosition;
         mousePosition = Camera.main.ScreenToWorldPoint(mousePosition);
 
+        // Player ile mouse pozisyonu arasındaki yön
         Vector2 direction = new Vector2(
             mousePosition.x - transform.position.x,
             mousePosition.y - transform.position.y
         );
 
+        // FirePoint'i mouse pozisyonuna doğru döndür
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        firePoint.rotation = Quaternion.Euler(0, 0, angle); // Sadece FirePoint döndürülür
+        firePoint.rotation = Quaternion.Euler(0, 0, angle);
+
+        // FirePoint'in pozisyonunu Player etrafında bir daire üzerinde güncelle
+        float radius = 1.5f; // Attack Point'in Player'dan uzaklığı
+        firePoint.position = new Vector3(
+            transform.position.x + Mathf.Cos(angle * Mathf.Deg2Rad) * radius,
+            transform.position.y + Mathf.Sin(angle * Mathf.Deg2Rad) * radius,
+            0 // Z ekseni sabit
+        );
     }
+
 
     private void ShootFireball()
     {
