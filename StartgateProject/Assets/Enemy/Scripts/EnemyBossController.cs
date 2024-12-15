@@ -1,202 +1,208 @@
-using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine.Tilemaps;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
-public class EnemyBossController : MonoBehaviour
+public class ElectricBossController : MonoBehaviour
 {
-    // Health variables
-    public int maxHealth = 100;
-    private int currentHealth;
+    public enum BossState { Idle, Chase, AttackWithSword, FireElectricBall }
 
-    // Movement variables
-    public float stepDuration = 0.3f;
-    public float teleportDuration = 0.5f; // Duration for smooth teleport
-
-    // Attack variables
-    public GameObject electricShockPrefab;
-    public GameObject swordPrefab;
-    public Transform attackPoint;
-    public float shockRange = 5f;
-    public float shockCooldown = 3f;
-    private float lastShockTime;
-    public float swordAttackRange = 1.5f;
-    public float swordAttackCooldown = 2f;
-    private float lastSwordAttackTime;
-
-    public Transform player;
-
-    // Animator
-    private Animator animator;
-
-    // Wall mechanic variables
+    [Header("Movement Settings")]
+    public float tileSize = 1.5f; // Tile boyutu
+    public float moveCooldown = 0.1f; // Tile başına hareket süresi
+    public float moveSmoothness = 1f; // Hareketin yumuşaklığı
     public Tilemap wallTilemap;
+
+    [Header("Shooting Settings")]
+    public GameObject electricBallPrefab;
+    public Transform firePoint;
+    public float shootingCooldown = 2f;
+
+    [Header("Sword Attack Settings")]
+    public Transform swordTransform;
+    public float swordSwingBackAngle = -45f;
+    public float swordStabDuration = 0.3f;
+    public float swordAttackRange = 1.5f;
+    public LayerMask playerLayer;
+    public Transform attackPoint;
+
+    private GameObject player;
+    private BossState currentState = BossState.Idle;
+    private float stateTimer;
+    private float moveTimer;
+
     private HashSet<Vector3Int> wallPositions = new HashSet<Vector3Int>();
 
-    private bool isMoving = false;
+    private Vector3 targetPosition;
+    private bool isMoving;
 
-    void Start()
+    private void Awake()
     {
-        currentHealth = maxHealth;
-        animator = GetComponent<Animator>();
+        player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogError("Player object not found in the scene!");
+        }
         CollectWallPositions();
+        targetPosition = transform.position;
     }
 
-    void Update()
+    private void Update()
     {
-        if (player == null || isMoving)
-            return;
+        if (player == null) return;
 
-        MoveStepTowardsPlayer();
-        HandleAttacks();
+        stateTimer -= Time.deltaTime;
+        moveTimer -= Time.deltaTime;
+
+        if (isMoving)
+        {
+            SmoothMoveToTarget();
+            return;
+        }
+
+        switch (currentState)
+        {
+            case BossState.Idle:
+                if (stateTimer <= 0f)
+                {
+                    currentState = BossState.Chase;
+                    stateTimer = moveCooldown;
+                }
+                break;
+
+            case BossState.Chase:
+                if (Vector3.Distance(transform.position, player.transform.position) <= swordAttackRange + 0.5f)
+                {
+                    currentState = BossState.AttackWithSword;
+                }
+                else if (moveTimer <= 0f)
+                {
+                    MoveTowardsPlayer();
+                    moveTimer = moveCooldown;
+                }
+                if (stateTimer <= 0f)
+                {
+                    currentState = BossState.FireElectricBall;
+                    stateTimer = shootingCooldown;
+                }
+                break;
+
+            case BossState.AttackWithSword:
+                StartCoroutine(SwordAttack());
+                currentState = BossState.Idle;
+                stateTimer = moveCooldown;
+                break;
+
+            case BossState.FireElectricBall:
+                ShootElectricBall();
+                currentState = BossState.Idle;
+                stateTimer = shootingCooldown;
+                break;
+        }
     }
 
-    private void MoveStepTowardsPlayer()
+    private void SmoothMoveToTarget()
+    {
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSmoothness * Time.deltaTime);
+        if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
+        {
+            transform.position = targetPosition;
+            isMoving = false;
+        }
+    }
+
+    private void MoveTowardsPlayer()
     {
         Vector3Int currentGridPosition = wallTilemap.WorldToCell(transform.position);
-        Vector3Int targetGridPosition = wallTilemap.WorldToCell(player.position);
+        Vector3Int targetGridPosition = wallTilemap.WorldToCell(player.transform.position);
 
-        Vector3Int nextStep = GetNextStep(currentGridPosition, targetGridPosition);
+        Vector3Int moveDirection = Vector3Int.zero;
 
-        if (nextStep != currentGridPosition && !wallPositions.Contains(nextStep))
+        if (Mathf.Abs(targetGridPosition.x - currentGridPosition.x) > Mathf.Abs(targetGridPosition.y - currentGridPosition.y))
         {
-            Vector3 nextWorldPosition = wallTilemap.CellToWorld(nextStep) + new Vector3(0.5f, 0.5f, 0f);
-            StartCoroutine(MoveToPosition(nextWorldPosition));
+            moveDirection.x = targetGridPosition.x > currentGridPosition.x ? 1 : -1;
         }
-    }
-
-    private Vector3Int GetNextStep(Vector3Int current, Vector3Int target)
-    {
-        List<Vector3Int> possibleSteps = new List<Vector3Int>
+        else
         {
-            current + Vector3Int.up,
-            current + Vector3Int.down,
-            current + Vector3Int.left,
-            current + Vector3Int.right
-        };
-
-        Vector3Int bestStep = current;
-        float shortestDistance = float.MaxValue;
-
-        foreach (var step in possibleSteps)
-        {
-            if (!wallPositions.Contains(step))
-            {
-                float distance = Vector3Int.Distance(step, target);
-                if (distance < shortestDistance)
-                {
-                    shortestDistance = distance;
-                    bestStep = step;
-                }
-            }
+            moveDirection.y = targetGridPosition.y > currentGridPosition.y ? 1 : -1;
         }
 
-        return bestStep;
+        Vector3Int newGridPosition = currentGridPosition + moveDirection;
+
+        if (!wallPositions.Contains(newGridPosition) && Vector3.Distance(transform.position, player.transform.position) > swordAttackRange + 0.5f)
+        {
+            targetPosition = wallTilemap.CellToWorld(newGridPosition) + new Vector3(tileSize / 2f, tileSize / 2f, 0);
+            isMoving = true;
+        }
+
+        RotateTowardsPlayer();
     }
 
-    private IEnumerator MoveToPosition(Vector3 targetPosition)
+    private void RotateTowardsPlayer()
     {
-        isMoving = true;
-        Vector3 startPosition = transform.position;
-        float elapsed = 0f;
+        Vector3 direction = (player.transform.position - transform.position).normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
 
-        while (elapsed < stepDuration)
+    private void ShootElectricBall()
+    {
+        if (electricBallPrefab == null || firePoint == null)
         {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Sin((elapsed / stepDuration) * Mathf.PI * 0.5f); // Smoother movement with sine curve
-            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            Debug.LogError("Electric Ball Prefab or Fire Point is missing!");
+            return;
+        }
+
+        // Elektrik topu oluştur ve yönlendir
+        GameObject electricBall = Instantiate(electricBallPrefab, firePoint.position, firePoint.rotation);
+        Rigidbody2D rb = electricBall.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            Vector2 direction = (player.transform.position - firePoint.position).normalized;
+            rb.linearVelocity = direction * 5f; // Elektrik topu hızı
+        }
+        else
+        {
+            Debug.LogError("Electric Ball Prefab does not have a Rigidbody2D component!");
+        }
+
+        Debug.Log("Electric Ball fired!");
+    }
+
+    private IEnumerator SwordAttack()
+    {
+        Debug.Log("Sword attack initiated.");
+
+        float elapsedTime = 0f;
+        Quaternion initialRotation = swordTransform.localRotation;
+        Quaternion swingBackRotation = Quaternion.Euler(0, 0, swordSwingBackAngle);
+
+        while (elapsedTime < swordStabDuration / 2)
+        {
+            elapsedTime += Time.deltaTime;
+            swordTransform.localRotation = Quaternion.Lerp(initialRotation, swingBackRotation, elapsedTime / (swordStabDuration / 2));
             yield return null;
         }
 
-        transform.position = targetPosition;
-        isMoving = false;
-    }
-
-    private void HandleAttacks()
-    {
-        if (Time.time > lastShockTime + shockCooldown)
+        elapsedTime = 0f;
+        while (elapsedTime < swordStabDuration / 2)
         {
-            ElectricShockAttack();
-        }
-
-        if (Time.time > lastSwordAttackTime + swordAttackCooldown)
-        {
-            SwordAttack();
-        }
-    }
-
-    public void TeleportTo(Vector3Int gridPosition)
-    {
-        Vector3 targetPosition = wallTilemap.CellToWorld(gridPosition) + new Vector3(0.5f, 0.5f, 0f);
-        StartCoroutine(SmoothTeleport(targetPosition));
-    }
-
-    private IEnumerator SmoothTeleport(Vector3 targetPosition)
-    {
-        isMoving = true;
-        Vector3 startPosition = transform.position;
-        float elapsed = 0f;
-
-        while (elapsed < teleportDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Sin((elapsed / teleportDuration) * Mathf.PI * 0.5f); // Smoother teleport with sine curve
-            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            elapsedTime += Time.deltaTime;
+            swordTransform.localRotation = Quaternion.Lerp(swingBackRotation, initialRotation, elapsedTime / (swordStabDuration / 2));
             yield return null;
         }
 
-        transform.position = targetPosition;
-        isMoving = false;
-    }
+        Debug.Log("Sword attack completed.");
+        Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, swordAttackRange, playerLayer);
 
-    private void ElectricShockAttack()
-    {
-        lastShockTime = Time.time;
-        animator.SetTrigger("ElectricShock");
-
-        Collider2D[] hitObjects = Physics2D.OverlapCircleAll(transform.position, shockRange);
-
-        foreach (Collider2D obj in hitObjects)
+        foreach (Collider2D hit in hitPlayers)
         {
-            if (obj.CompareTag("Player"))
+            if (hit.CompareTag("Player"))
             {
-                Debug.Log("Player hit by electric shock!");
-                // Apply damage or effects to player here
+                Debug.Log("Player hit by sword!");
+                // Apply damage to player
             }
         }
-    }
-
-    private void SwordAttack()
-    {
-        lastSwordAttackTime = Time.time;
-        animator.SetTrigger("SwordAttack");
-
-        Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, swordAttackRange);
-
-        foreach (Collider2D obj in hitObjects)
-        {
-            if (obj.CompareTag("Player"))
-            {
-                Debug.Log("Player hit by sword attack!");
-                // Apply damage or effects to player here
-            }
-        }
-    }
-
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
-    private void Die()
-    {
-        Debug.Log("Boss defeated!");
-        // Play death animation or effects
-        Destroy(gameObject);
     }
 
     private void CollectWallPositions()
@@ -214,13 +220,13 @@ public class EnemyBossController : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log($"Collected {wallPositions.Count} wall positions.");
     }
 
     private void OnDrawGizmosSelected()
     {
-        // Visualize the shock range and sword attack range in the editor
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, shockRange);
+        if (attackPoint == null) return;
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, swordAttackRange);

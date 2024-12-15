@@ -7,6 +7,10 @@ public class PlayerAttack : MonoBehaviour
     public BulletData fireballData;   // Fireball için ScriptableObject referansı
     public Transform firePoint;       // FirePoint referansı
 
+    [Header("Golem Bomb Settings")]
+    public GameObject golemBombPrefab; // Golem bombası prefab referansı
+    public KeyCode golemAttackKey = KeyCode.Q; // Golem bombası saldırı tuşu
+
     [Header("Attack Settings")]
     public KeyCode attackKey = KeyCode.E; // Ateş topu saldırı tuşu
     public float attackCooldown = 0.5f;   // Atışlar arasındaki bekleme süresi
@@ -25,6 +29,12 @@ public class PlayerAttack : MonoBehaviour
             ShootFireball();
             cooldownTimer = attackCooldown; // Cooldown sıfırlama
         }
+
+        // Golem bombası saldırısı
+        if (Input.GetKeyDown(golemAttackKey))
+        {
+            ThrowGolemBomb();
+        }
     }
 
     private void RotateFirePointToMouse()
@@ -33,8 +43,8 @@ public class PlayerAttack : MonoBehaviour
         mousePosition = Camera.main.ScreenToWorldPoint(mousePosition);
 
         Vector2 direction = new Vector2(
-            mousePosition.x - firePoint.position.x,
-            mousePosition.y - firePoint.position.y
+            mousePosition.x - transform.position.x,
+            mousePosition.y - transform.position.y
         );
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -57,6 +67,32 @@ public class PlayerAttack : MonoBehaviour
         {
             fireballScript.bulletData = fireballData;
             fireballScript.owner = gameObject;
+        }
+    }
+
+    private void ThrowGolemBomb()
+    {
+        if (golemBombPrefab == null || firePoint == null)
+        {
+            Debug.LogError("Golem Bomb Prefab veya FirePoint eksik!");
+            return;
+        }
+
+        // Golem bombası oluştur
+        GameObject golemBomb = Instantiate(golemBombPrefab, firePoint.position, firePoint.rotation);
+
+        Rigidbody2D rb = golemBomb.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            // Bombayı ileri doğru fırlat
+            rb.linearVelocity = firePoint.right * 10f; // Fırlatma hızı
+        }
+
+        // Bombanın partikül efektini başlat
+        ParticleSystem particleSystem = golemBomb.GetComponentInChildren<ParticleSystem>();
+        if (particleSystem != null)
+        {
+            particleSystem.Play();
         }
     }
 }

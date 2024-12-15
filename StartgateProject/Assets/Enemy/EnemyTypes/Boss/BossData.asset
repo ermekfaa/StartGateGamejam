@@ -22,4 +22,4 @@ MonoBehaviour:
   shootRange: 15
   shootFrequency: 1
   shootAccuracy: 0.8
-  bulletPrefab: {fileID: 0}
+  bulletPrefab: {fileID: 9098675224036893986, guid: aff241598554e664da67033b7c7763cd, type: 3}

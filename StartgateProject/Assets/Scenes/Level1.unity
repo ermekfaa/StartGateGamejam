@@ -1376,7 +1376,11 @@ PrefabInstance:
       objectReference: {fileID: 2345911278570601784, guid: cbf96f297d0e71f439897181665c1a5d, type: 3}
     - target: {fileID: 6954886318927439150, guid: 0ef08c60d73e6b84d8ca7d1add3dd0cc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.81
+      value: 0.58
+      objectReference: {fileID: 0}
+    - target: {fileID: 6954886318927439150, guid: 0ef08c60d73e6b84d8ca7d1add3dd0cc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 8818813460565979752, guid: 0ef08c60d73e6b84d8ca7d1add3dd0cc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3650,6 +3654,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss
       objectReference: {fileID: 0}
+    - target: {fileID: 3723825036315135842, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
+      propertyPath: m_TagString
+      value: Enemy
+      objectReference: {fileID: 0}
     - target: {fileID: 4327456051782339796, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
       propertyPath: enemyData
       value: 
@@ -3670,6 +3678,18 @@ PrefabInstance:
       propertyPath: wallTilemap
       value: 
       objectReference: {fileID: 628904309}
+    - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
+      propertyPath: groundTilemap
+      value: 
+      objectReference: {fileID: 1085812874}
+    - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
+      propertyPath: swordTransform
+      value: 
+      objectReference: {fileID: 483857875}
+    - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
+      propertyPath: teleportDuration
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
       propertyPath: electricShockPrefab
       value: 
