@@ -6131,7 +6131,7 @@ PrefabInstance:
       objectReference: {fileID: 679179791}
     - target: {fileID: -6658519478734609143, guid: a42533126af61cb4eaa7ba239ff144b2, type: 3}
       propertyPath: gateName
-      value: LavaGate
+      value: Gate0
       objectReference: {fileID: 0}
     - target: {fileID: -6658519478734609143, guid: a42533126af61cb4eaa7ba239ff144b2, type: 3}
       propertyPath: maskImage

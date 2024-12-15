@@ -4,27 +4,26 @@ using TMPro;
 public class DialogTrigger2D : MonoBehaviour
 {
     [Header("Dialog Settings")]
-    public string[] dialogLines; // Gösterilecek cümleler (her biri bir satýr)
-    public string questionText = "Q: Evet\nE: Hayýr"; // Soru metni
-    public string dealMadeText = "Deal is made!"; // Karar verildiðinde gösterilecek metin
-    public Vector3 dialogOffset = new Vector3(0, 1.5f, 0); // Metin pozisyonu için offset
-    public float fontSize = 5f; // Metin boyutu
+    public string[] dialogLines;
+    public string questionText = "Q: Evet\nE: Hayýr";
+    public string dealMadeText = "Deal is made!";
+    public Vector3 dialogOffset = new Vector3(0, 1.5f, 0);
+    public float fontSize = 5f;
 
     [Header("TMP Settings")]
-    public TextMeshPro dialogTextObject; // Sahnedeki bir TextMeshPro objesi
+    public TextMeshPro dialogTextObject;
 
-    private bool isPlayerInsideTrigger = false; // Oyuncu trigger'da mý?
-    private bool questionAsked = false; // Soru soruldu mu?
-    private int currentLineIndex = 0; // Þu anki cümle satýrýnýn indeksi
-    private bool decisionMade = false; // Karar verildi mi?
+    private bool isPlayerInsideTrigger = false;
+    private bool questionAsked = false;
+    private int currentLineIndex = 0;
+    private bool decisionMade = false;
 
     void Start()
     {
-        // TextMeshPro nesnesini gizle (baþlangýçta görünmesin)
         if (dialogTextObject != null)
         {
             dialogTextObject.gameObject.SetActive(false);
-            dialogTextObject.fontSize = fontSize; // Font boyutunu baþlangýçta ayarla
+            dialogTextObject.fontSize = fontSize;
         }
         else
         {
@@ -34,85 +33,114 @@ public class DialogTrigger2D : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player")) // Eðer "Player" tag'ýna sahip bir obje trigger'a girerse
+        if (other.CompareTag("Player"))
         {
             isPlayerInsideTrigger = true;
 
-            if (decisionMade) // Karar daha önce verilmiþse
+            if (decisionMade)
             {
-                ShowDialog(dealMadeText); // "Deal is made" metnini göster
+                ShowDialog(dealMadeText);
             }
             else
             {
-                currentLineIndex = 0; // Diyalog baþtan baþlasýn
-                ShowDialog(dialogLines[currentLineIndex]); // Ýlk satýrý göster
+                currentLineIndex = 0;
+                ShowDialog(dialogLines[currentLineIndex]);
             }
         }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player")) // Eðer "Player" tag'ýna sahip bir obje trigger'dan çýkarsa
+        if (other.CompareTag("Player"))
         {
             isPlayerInsideTrigger = false;
-            questionAsked = false; // Soru sýfýrlanýr
-            HideDialog(); // Diyaloðu gizle
+            questionAsked = false;
+            HideDialog();
         }
     }
 
     void Update()
     {
-        if (isPlayerInsideTrigger && !decisionMade) // Trigger içindeyken ve karar verilmemiþse
+        if (isPlayerInsideTrigger && !decisionMade)
         {
-            if (!questionAsked) // Soru sorulmamýþsa
+            if (!questionAsked)
             {
-                if (Input.GetKeyDown(KeyCode.Space)) // Space ile bir sonraki cümleye geç
+                if (Input.GetKeyDown(KeyCode.Space))
                 {
                     currentLineIndex++;
-                    if (currentLineIndex < dialogLines.Length) // Cümleler bitmediyse
+                    if (currentLineIndex < dialogLines.Length)
                     {
                         ShowDialog(dialogLines[currentLineIndex]);
                     }
-                    else // Tüm cümleler bittiðinde soru sor
+                    else
                     {
                         ShowDialog(questionText);
                         questionAsked = true;
                     }
                 }
             }
-            else // Soru sorulduysa
+            else
             {
-                if (Input.GetKeyDown(KeyCode.Q)) // Q: Evet
+                if (Input.GetKeyDown(KeyCode.Q))
                 {
                     Debug.Log("Evet dedin!");
                     ShowDialog("Evet dedin! Teþekkürler.");
                     EndDialog();
                 }
-                else if (Input.GetKeyDown(KeyCode.E)) // E: Hayýr
+                else if (Input.GetKeyDown(KeyCode.E))
                 {
                     Debug.Log("Hayýr dedin!");
-                    ShowDialog("Hayýr dedin! Belki sonra.");
+                    ApplyRandomHealthEffect();
+                    ShowDialog("Hayýr dedin! Þansýný denedin.");
                     EndDialog();
                 }
             }
         }
     }
 
+    void ApplyRandomHealthEffect()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                float randomValue = Random.value; // 0 ile 1 arasýnda rastgele bir sayý
+                if (randomValue < 0.5f)
+                {
+                    Debug.Log("Þanslýsýn! Canýn iki katýna çýktý.");
+                    playerHealth.Heal(playerHealth.maxHealth); // Mevcut caný iki katýna çýkar
+                }
+                else
+                {
+                    Debug.Log("Þanssýzsýn! Canýn yarýya düþtü.");
+                    int damage = Mathf.CeilToInt(playerHealth.maxHealth / 2f);
+                    playerHealth.TakeDamage(damage); // Caný yarýya indir
+                }
+            }
+            else
+            {
+                Debug.LogError("PlayerHealth script'i atanmadý.");
+            }
+        }
+    }
+
     void EndDialog()
     {
-        decisionMade = true; // Karar verildi
-        ShowDialog(dealMadeText); // "Deal is made!" metnini göster
-        Debug.Log(dealMadeText); // Konsola yaz
+        decisionMade = true;
+        ShowDialog(dealMadeText);
+        Debug.Log(dealMadeText);
     }
 
     void ShowDialog(string text)
     {
         if (dialogTextObject != null)
         {
-            dialogTextObject.text = text; // Metni ayarla
-            dialogTextObject.gameObject.SetActive(true); // TextMeshPro'yu görünür yap
-            dialogTextObject.transform.position = transform.position + dialogOffset; // Pozisyonunu ayarla
-            dialogTextObject.fontSize = fontSize; // Metin boyutunu ayarla
+            dialogTextObject.text = text;
+            dialogTextObject.gameObject.SetActive(true);
+            dialogTextObject.transform.position = transform.position + dialogOffset;
+            dialogTextObject.fontSize = fontSize;
         }
     }
 
@@ -120,7 +148,7 @@ public class DialogTrigger2D : MonoBehaviour
     {
         if (dialogTextObject != null)
         {
-            dialogTextObject.gameObject.SetActive(false); // TextMeshPro'yu gizle
+            dialogTextObject.gameObject.SetActive(false);
         }
     }
 }
