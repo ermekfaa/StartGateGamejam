@@ -179,31 +179,56 @@ public class EnemyBossController : MonoBehaviour
 
     private IEnumerator SwordAttack()
     {
-        float elapsedTime = 0f;
-        Quaternion initialRotation = swordTransform.localRotation;
-        Quaternion swingBackRotation = Quaternion.Euler(0, 0, swordSwingBackAngle);
+        Debug.Log("Sword attack initiated.");
 
+        // Kılıcı geri çekmek için ayarlamalar
+        Quaternion initialRotation = swordTransform.localRotation; // Kılıcın başlangıç pozisyonu
+        Quaternion swingRotation = Quaternion.Euler(0, 0, swordSwingBackAngle); // Kılıcın savurma açısı
+
+        // Geri savurma hareketi (oyuncuya vuracak şekilde kılıç hareket eder)
+        float elapsedTime = 0f;
         while (elapsedTime < swordStabDuration / 2)
         {
             elapsedTime += Time.deltaTime;
-            swordTransform.localRotation = Quaternion.Lerp(initialRotation, swingBackRotation, elapsedTime / (swordStabDuration / 2));
+            swordTransform.localRotation = Quaternion.Lerp(initialRotation, swingRotation, elapsedTime / (swordStabDuration / 2));
             yield return null;
         }
 
+        // Geri dönüş hareketi (kılıç eski pozisyonuna döner)
         elapsedTime = 0f;
         while (elapsedTime < swordStabDuration / 2)
         {
             elapsedTime += Time.deltaTime;
-            swordTransform.localRotation = Quaternion.Lerp(swingBackRotation, initialRotation, elapsedTime / (swordStabDuration / 2));
+            swordTransform.localRotation = Quaternion.Lerp(swingRotation, initialRotation, elapsedTime / (swordStabDuration / 2));
             yield return null;
         }
 
+        Debug.Log("Sword attack completed.");
+
+        // Oyuncuyu algıla ve hasar uygula
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, swordAttackRange, playerLayer);
         foreach (Collider2D hit in hitPlayers)
         {
-            if (hit.CompareTag("Player")) Debug.Log("Player hit by sword!");
+            if (hit.CompareTag("Player"))
+            {
+                Debug.Log("Player hit by sword!");
+
+                // Eğer PlayerHealth bileşeni varsa hasar uygula
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    int damage = 20; // Belirlenen hasar miktarı
+                    playerHealth.TakeDamage(damage);
+                    Debug.Log($"Player took {damage} damage. Current health: {playerHealth}");
+                }
+            }
         }
     }
+
+
+
+
+
 
     private void CollectWallPositions()
     {
