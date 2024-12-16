@@ -68,8 +68,9 @@ public class GollemBehaviour : MonoBehaviour
     private void FindClosestEnemy()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        GameObject[] bosses = GameObject.FindGameObjectsWithTag("Boss");
 
-        if (enemies.Length == 0)
+        if (enemies.Length == 0 && bosses.Length == 0)
         {
             Debug.LogWarning("Hiç düþman bulunamadý!");
             target = null;
@@ -90,6 +91,35 @@ public class GollemBehaviour : MonoBehaviour
             {
                 shortestDistance = distance;
                 closestEnemy = enemy.transform;
+            }
+        }
+        /*
+        if (closestEnemy != null)
+        {
+            Debug.Log($"Hedef bulundu: {closestEnemy.name}");
+            target = closestEnemy;
+        }
+        else
+        {
+            Debug.LogWarning("Uygun hedef bulunamadý!");
+            target = null;
+        }
+        */
+
+
+
+        //BOSS KISMI
+        foreach (GameObject boss in bosses)
+        {
+            // Eðer düþman öldüyse (örneðin, "Die" tag'ine sahip olduysa), hedefleme
+            if (boss.CompareTag("Die"))
+                continue;
+
+            float distance = Vector3.Distance(transform.position, boss.transform.position);
+            if (distance < shortestDistance)
+            {
+                shortestDistance = distance;
+                closestEnemy = boss.transform;
             }
         }
 

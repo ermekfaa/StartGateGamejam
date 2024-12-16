@@ -866,6 +866,10 @@ PrefabInstance:
       propertyPath: enemyData
       value: 
       objectReference: {fileID: 11400000, guid: a314a71975ab2854a9fdda1e987d84df, type: 2}
+    - target: {fileID: 4327456051782339796, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
       propertyPath: firePoint
       value: 

@@ -9,14 +9,14 @@ public class EnemyBossController : MonoBehaviour
     public enum BossState { Idle, Chase, AttackWithSword, FireElectricBall }
 
     [Header("Health Settings")]
-    public float maxHealth = 100f; // Boss'un maksimum sağlığı
+    public float maxHealth = 300f; // Boss'un maksimum sağlığı
     private float currentHealth; // Boss'un mevcut sağlığı
     public Slider healthBar; // Sağlık barı (UI Slider)
 
     [Header("Movement Settings")]
-    public float tileSize = 1.5f; // Tile boyutu
-    public float moveCooldown = 0.1f; // Tile başına hareket süresi
-    public float moveSmoothness = 1f; // Hareketin yumuşaklığı
+    public float tileSize = 1.5f;
+    public float moveCooldown = 0.1f;
+    public float moveSmoothness = 1f;
     public Tilemap wallTilemap;
 
     [Header("Shooting Settings")]
@@ -53,7 +53,7 @@ public class EnemyBossController : MonoBehaviour
         CollectWallPositions();
         targetPosition = transform.position;
 
-        // Sağlığı maksimuma ayarla ve sağlık barını güncelle
+        // Sağlık yönetimi
         currentHealth = maxHealth;
         UpdateHealthBar();
     }
@@ -69,6 +69,13 @@ public class EnemyBossController : MonoBehaviour
         {
             SmoothMoveToTarget();
             return;
+        }
+
+        // Test için sağlık düşüşü
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TakeDamage(10f);
+            Debug.Log($"Damage Verildi: {currentHealth}");
         }
 
         switch (currentState)
@@ -117,7 +124,6 @@ public class EnemyBossController : MonoBehaviour
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSmoothness * Time.deltaTime);
         if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
         {
-            transform.position = targetPosition;
             isMoving = false;
         }
     }
@@ -158,11 +164,7 @@ public class EnemyBossController : MonoBehaviour
 
     private void ShootElectricBall()
     {
-        if (electricBallPrefab == null || firePoint == null)
-        {
-            Debug.LogError("Electric Ball Prefab or Fire Point is missing!");
-            return;
-        }
+        if (electricBallPrefab == null || firePoint == null) return;
 
         GameObject electricBall = Instantiate(electricBallPrefab, firePoint.position, firePoint.rotation);
         Rigidbody2D rb = electricBall.GetComponent<Rigidbody2D>();
@@ -170,10 +172,6 @@ public class EnemyBossController : MonoBehaviour
         {
             Vector2 direction = (player.transform.position - firePoint.position).normalized;
             rb.linearVelocity = direction * 5f;
-        }
-        else
-        {
-            Debug.LogError("Electric Ball Prefab does not have a Rigidbody2D component!");
         }
     }
 
@@ -201,10 +199,7 @@ public class EnemyBossController : MonoBehaviour
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(attackPoint.position, swordAttackRange, playerLayer);
         foreach (Collider2D hit in hitPlayers)
         {
-            if (hit.CompareTag("Player"))
-            {
-                Debug.Log("Player hit by sword!");
-            }
+            if (hit.CompareTag("Player")) Debug.Log("Player hit by sword!");
         }
     }
 
@@ -217,41 +212,63 @@ public class EnemyBossController : MonoBehaviour
             for (int y = bounds.yMin; y < bounds.yMax; y++)
             {
                 Vector3Int tilePosition = new Vector3Int(x, y, 0);
-                if (wallTilemap.HasTile(tilePosition))
-                {
-                    wallPositions.Add(tilePosition);
-                }
+                if (wallTilemap.HasTile(tilePosition)) wallPositions.Add(tilePosition);
             }
         }
     }
 
     private void UpdateHealthBar()
     {
-        Debug.LogError("HEalthBar1");
-
         if (healthBar != null)
         {
-            Debug.LogError("HEalthBar2");
-
-            // Sağlık bar değerini güncelle (0 - 1 arası normalize edilir)
-            healthBar.value = currentHealth / maxHealth;
-
-            // Barın rengini hep kırmızıda bırak
-            healthBar.fillRect.GetComponent<Image>().color = Color.red;
+            float normalizedHealth = currentHealth / maxHealth;
+            healthBar.value = normalizedHealth;
+            Debug.Log("Health bar güncellendi. Normalized Health: " + normalizedHealth);
+        }
+        else
+        {
+            Debug.LogError("HealthBar referansı eksik!");
         }
     }
 
 
+    private bool isDead = false; // Ölü olup olmadığını kontrol eder
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return; // Eğer Boss zaten ölmüşse, bir daha çalışmasın
+
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        Debug.Log("Boss health değeri: " + currentHealth);
+
         UpdateHealthBar();
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0) Die();
+    }
+
+    private void Die()
+    {
+        if (isDead) return; // Birden fazla kez çalışmasını önle
+        isDead = true;
+
+        Debug.Log("Boss öldü!");
+        Destroy(gameObject); // Boss'u yok et
+    }
+
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Boss"))
         {
-            Destroy(gameObject);
+            EnemyBossController boss = collision.GetComponent<EnemyBossController>();
+            if (boss != null)
+            {
+                boss.TakeDamage(50f); // Örnek hasar değeri
+            }
+
+            Destroy(gameObject); // Fireball'u yok et
         }
     }
+
 }
