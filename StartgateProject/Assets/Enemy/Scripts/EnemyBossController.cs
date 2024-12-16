@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // SceneManagement ekle
+
 
 public class EnemyBossController : MonoBehaviour
 {
@@ -253,7 +255,17 @@ public class EnemyBossController : MonoBehaviour
         isDead = true;
 
         Debug.Log("Boss öldü!");
+
+        // Ana menü sahnesine geçiş
+
         Destroy(gameObject); // Boss'u yok et
+        SceneManager.LoadScene("Menu"); // Ana menü sahnesinin adı "MainMenu" olarak kabul edildi
+
+    }
+
+    private void LoadMainMenu()
+    {
+        Debug.Log("Loading Main Menu...");
     }
 
 

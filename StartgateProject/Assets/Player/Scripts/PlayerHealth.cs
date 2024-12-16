@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -51,9 +52,14 @@ public class PlayerHealth : MonoBehaviour
         // Oyuncunun yok edilmesi veya pasif hale getirilmesi
         gameObject.SetActive(false); // Oyuncuyu sahneden kaldýr
 
-        // Game Over ekraný veya baþka bir iþlem baþlatma
-        // Örneðin:
-        //GameManager.Instance.ShowGameOverScreen();
+        // Ana menü sahnesine geçiþ
+        LoadMainMenu();
+    }
+
+    private void LoadMainMenu()
+    {
+        Debug.Log("Loading Main Menu...");
+        SceneManager.LoadScene("Menu"); // Ana menü sahnesinin adý "MainMenu" olarak kabul edildi
     }
 
 }
