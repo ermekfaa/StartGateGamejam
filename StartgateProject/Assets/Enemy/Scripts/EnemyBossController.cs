@@ -9,7 +9,7 @@ public class EnemyBossController : MonoBehaviour
     public enum BossState { Idle, Chase, AttackWithSword, FireElectricBall }
 
     [Header("Health Settings")]
-    public float maxHealth = 300f; // Boss'un maksimum sağlığı
+    public float maxHealth = 1000f; // Boss'un maksimum sağlığı
     private float currentHealth; // Boss'un mevcut sağlığı
     public Slider healthBar; // Sağlık barı (UI Slider)
 

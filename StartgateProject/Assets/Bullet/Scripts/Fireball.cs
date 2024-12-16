@@ -58,6 +58,17 @@ public class Fireball : MonoBehaviour
             }
         }
 
+        if (collision.CompareTag("Boss"))
+        {
+            Debug.Log("boss");
+            EnemyBossController boss = collision.GetComponent<EnemyBossController>();
+            if (boss != null)
+            {
+                boss.TakeDamage(bulletData.bulletDamage);
+                Debug.Log($"boss hit by fireball for {bulletData.bulletDamage} damage!");
+            }
+        }
+
         // E�er mermi delici de�ilse veya t�m delici haklar� t�kendiyse yok et
         bulletData.bulletPierce--;
         if (bulletData.bulletPierce <= 0)

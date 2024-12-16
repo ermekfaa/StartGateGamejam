@@ -204,7 +204,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -884,7 +884,7 @@ PrefabInstance:
       objectReference: {fileID: 1196250}
     - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
       propertyPath: maxHealth
-      value: 300
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 5965787329587513059, guid: 8b668d3ed6ab34d4499febbf963c92dd, type: 3}
       propertyPath: attackPoint
