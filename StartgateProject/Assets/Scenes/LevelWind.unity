@@ -385,6 +385,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: MiddleEnemy 1 1 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 7890085307456441582, guid: c04fbc34eac463c458f78eb66735f90b, type: 3}
+      propertyPath: enemyData
+      value: 
+      objectReference: {fileID: 11400000, guid: 0df5e5acb355ca34d84bb4c26d16c282, type: 2}
+    - target: {fileID: 7890085307456441582, guid: c04fbc34eac463c458f78eb66735f90b, type: 3}
+      propertyPath: wallTilemap
+      value: 
+      objectReference: {fileID: 628904309}
+    - target: {fileID: 7890085307456441582, guid: c04fbc34eac463c458f78eb66735f90b, type: 3}
+      propertyPath: fireballData
+      value: 
+      objectReference: {fileID: 11400000, guid: 0a44e8762b4990649858d454f41dba33, type: 2}
+    - target: {fileID: 7890085307456441582, guid: c04fbc34eac463c458f78eb66735f90b, type: 3}
+      propertyPath: fireballPrefab
+      value: 
+      objectReference: {fileID: 3395726299965449194, guid: 7157168223e37a849979cb8a7f9c7311, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
