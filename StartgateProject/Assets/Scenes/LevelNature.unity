@@ -728,7 +728,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: -1
+  m_SortingOrder: -2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -3964,6 +3964,14 @@ PrefabInstance:
       value: 'Q: Yes E: No'
       objectReference: {fileID: 0}
     - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
+      propertyPath: dialogOffset.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
+      propertyPath: dialogOffset.y
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
       propertyPath: dialogTextObject
       value: 
       objectReference: {fileID: 854856925}
@@ -3973,7 +3981,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
       propertyPath: 'dialogLines.Array.data[0]'
-      value: I'm going to give you an offer
+      value: I'm going to give you an offer (Press Space))
       objectReference: {fileID: 0}
     - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
       propertyPath: 'dialogLines.Array.data[1]'
@@ -11107,6 +11115,10 @@ PrefabInstance:
     - target: {fileID: 4931320997549249134, guid: 57c3ce86944256243997d39e6548f1c4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5538449535677233587, guid: 57c3ce86944256243997d39e6548f1c4, type: 3}
+      propertyPath: m_SortingOrder
+      value: -1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
