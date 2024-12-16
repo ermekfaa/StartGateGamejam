@@ -12,7 +12,7 @@ public class EnemyBossController : MonoBehaviour
 
     [Header("Health Settings")]
     public float maxHealth = 1000f; // Boss'un maksimum sağlığı
-    private float currentHealth; // Boss'un mevcut sağlığı
+    public float currentHealth; // Boss'un mevcut sağlığı
     public Slider healthBar; // Sağlık barı (UI Slider)
 
     [Header("Movement Settings")]

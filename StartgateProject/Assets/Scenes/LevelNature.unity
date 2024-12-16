@@ -3981,7 +3981,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
       propertyPath: 'dialogLines.Array.data[0]'
-      value: I'm going to give you an offer (Press Space))
+      value: I'm going to give you an offer (Press Space)
       objectReference: {fileID: 0}
     - target: {fileID: 5838591357738194300, guid: dece04c304b4ed142b1df1d733f8fca6, type: 3}
       propertyPath: 'dialogLines.Array.data[1]'

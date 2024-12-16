@@ -4,43 +4,32 @@ using UnityEngine.UI;
 public class BossBar : MonoBehaviour
 {
     public Slider healthSlider; // Saðlýk barýný temsil eden slider
-    private BossHealth bossHealth;
+    private EnemyBossController bossHealth;
 
     private void Start()
     {
-        // Sahnedeki BossHealth bileþenini bul
-        bossHealth = FindObjectOfType<BossHealth>();
+        // Sahnedeki EnemyBossController bileþenini bul
+        bossHealth = FindObjectOfType<EnemyBossController>();
 
         if (bossHealth != null)
         {
             // Saðlýk barýný maksimum saðlýkla ayarla
-            healthSlider.maxValue = bossHealth.MaxHealth;
-            healthSlider.value = bossHealth.CurrentHealth;
-
-            // BossHealth'ten gelen event'i dinle
-            bossHealth.onHealthChanged += UpdateHealthBar;
+            healthSlider.maxValue = bossHealth.maxHealth;
+            healthSlider.value = bossHealth.currentHealth;
         }
         else
         {
-            Debug.LogError("BossHealth scripti sahnede bulunamadý!");
+            Debug.LogError("EnemyBossController scripti sahnede bulunamadý!");
         }
     }
 
-    private void UpdateHealthBar(float currentHealth, float maxHealth)
+    private void Update()
     {
-        if (healthSlider != null)
-        {
-            healthSlider.maxValue = maxHealth;
-            healthSlider.value = currentHealth;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // Event'i dinlemekten çýk
+        // Eðer bossHealth mevcutsa, saðlýk deðerlerini sürekli güncelle
         if (bossHealth != null)
         {
-            bossHealth.onHealthChanged -= UpdateHealthBar;
+            healthSlider.maxValue = bossHealth.maxHealth;
+            healthSlider.value = bossHealth.currentHealth;
         }
     }
 }
